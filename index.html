@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dona Helena: controle de medicamentos</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#141012;--panel:#0B0B0C;--ink:#EDEAE6;--mut:#B4B1AF;--line:#2B1D20;--acc:#D9434E;--accsoft:#2A1114;--accink:#fff;--ok:#5FD4A0;--okbg:#11301F;--warn:#F4C25B;--warnbg:#342806;--crit:#FFA970;--critbg:#3A220F;--bad:#FF8F8F;--badbg:#3A1618;--ctrl:#C4A5FA;--ctrlbg:#2A1F46;--frio:#8DB7FF;--friobg:#13284A;--c-acc:#D9434E;--c-ok:#2DB67C;--c-warn:#F5B335;--c-crit:#F97316;--c-bad:#EF4444;--c-ctrl:#8B5CF6;--c-frio:#3B82F6;--c-mut:#77716D;--sh:0 1px 2px rgba(0,0,0,.4);color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15.5px/1.5 "Manrope",system-ui,sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--panel);z-index:10}
+.shell{display:block}
+.side{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--panel);border-bottom:1px solid var(--line);padding:10px 12px 0;display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center}
+.brand{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;line-height:1.15}
+.brand small{display:block;font-size:12px;font-weight:500;color:var(--mut)}
+.logo{width:34px;height:34px;border-radius:10px;background:var(--acc);color:var(--accink);display:grid;place-items:center;flex:none}
+.pill{font-size:12px;font-weight:600;padding:3px 10px;border-radius:99px;background:var(--accsoft);color:var(--acc);white-space:nowrap}
+nav{grid-column:1/-1;display:flex;overflow-x:auto;gap:2px;margin:0 -4px}
+.tab{display:flex;align-items:center;gap:8px;background:none;border:0;border-bottom:3px solid transparent;border-radius:0;min-height:44px;padding:0 12px;color:var(--mut);font-weight:600;white-space:nowrap}
+.tab .ico svg{width:18px;height:18px}
+.tab[aria-current="page"]{color:var(--ink);border-bottom-color:var(--acc)}
+.cnt{display:inline-block;min-width:20px;padding:0 6px;margin-left:2px;border-radius:99px;background:var(--c-bad);color:#fff;font-size:12px;line-height:20px;text-align:center}
+@media(min-width:960px){
+ .shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+ body::before{display:none}
+ .side{top:0;height:100vh;display:flex;flex-direction:column;align-items:stretch;gap:22px;padding:22px 14px;border-bottom:0;border-right:1px solid var(--line)}
+ nav{flex-direction:column;overflow:visible;margin:0;gap:4px}
+ .tab{border-bottom:0;border-radius:10px;min-height:42px;padding:0 12px}
+ .tab[aria-current="page"]{background:var(--accsoft);color:var(--acc)}
+ .brand{order:1}nav{order:2}.pill{order:3;margin-top:auto;align-self:flex-start}.me{order:4;border-top:1px solid var(--line);padding-top:14px}
+}
+main{width:100%;max-width:1220px;margin:0 auto;padding:22px 18px 56px;display:grid;gap:18px;align-content:start}
+@media(min-width:960px){main{padding:30px 36px 56px}}
+h1{font-size:24px;line-height:1.2;margin:0;font-weight:800;letter-spacing:-.01em}
+h2{font-size:15px;margin:0 0 12px;font-weight:700}
+p{margin:0}.sub{color:var(--mut)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--sh)}
+.cols{display:grid;gap:18px}
+@media(min-width:900px){.cols{grid-template-columns:1.3fr .7fr;align-items:start}.cols.even{grid-template-columns:1fr 1fr}}
+.g3{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(290px,1fr))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.row.end{justify-content:flex-end;margin-top:14px}.row.mid{align-items:center}
+.pagehead{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:flex-end}
+label{display:grid;gap:5px;font-size:13px;font-weight:600;color:var(--mut);flex:1 1 170px}
+label.chk{display:flex;align-items:center;gap:8px;color:var(--ink);flex:0 1 auto;min-height:36px;font-size:15px;font-weight:500}
+input,select,textarea{font:inherit;font-weight:500;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%}
+input[type="checkbox"]{width:20px;min-height:20px;height:20px}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button{font:inherit;font-weight:700;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button.main{background:var(--acc);border-color:var(--acc);color:var(--accink)}
+button.sm{min-height:34px;padding:0 12px;font-size:13.5px;border-radius:8px}
+button.danger{color:var(--bad)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.chip{min-height:34px;border-radius:99px;padding:0 14px;font-size:13.5px}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
+.seg{display:inline-flex}.seg button{border-radius:0}.seg button:first-child{border-radius:10px 0 0 10px}.seg button:last-child{border-radius:0 10px 10px 0}
+.seg button[aria-pressed="true"]{background:var(--acc);color:var(--accink);border-color:var(--acc)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px;box-shadow:var(--sh)}
+.kpi .top{display:flex;justify-content:space-between;align-items:center;color:var(--mut);font-size:13px;font-weight:600}
+.kpi .ico{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:var(--tint);color:var(--c)}
+.kpi b{font-size:32px;line-height:1;font-weight:800;letter-spacing:-.02em}
+.kpi small{color:var(--mut);font-size:12.5px}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12.5px;font-weight:700;white-space:nowrap}
+.tag.ok{background:var(--okbg);color:var(--ok)}.tag.warn{background:var(--warnbg);color:var(--warn)}.tag.crit{background:var(--critbg);color:var(--crit)}.tag.bad{background:var(--badbg);color:var(--bad)}.tag.sem{background:var(--bg);color:var(--mut)}.tag.ctrl{background:var(--ctrlbg);color:var(--ctrl)}.tag.frio{background:var(--friobg);color:var(--frio)}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:600}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:620px}
+th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);font-size:14.5px;vertical-align:middle}
+th{color:var(--mut);font-weight:600;font-size:12.5px;white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--bg)}
+td.num,th.num{text-align:right}
+td small{display:block;color:var(--mut);font-size:12.5px;font-weight:500}
+.badges{display:inline-flex;gap:4px;margin-left:6px;vertical-align:middle}
+.empty{color:var(--mut);padding:14px 0}
+.banner{border-radius:12px;padding:12px 16px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center;font-weight:600}
+.banner.bad{background:var(--badbg);color:var(--bad)}.banner.warn{background:var(--warnbg);color:var(--warn)}
+.vf{position:relative;aspect-ratio:4/3;background:#0B0B0C;border-radius:12px;overflow:hidden;margin:12px 0}
+.vf video{width:100%;height:100%;object-fit:cover;display:block}
+.vf .off{position:absolute;inset:0;display:grid;place-items:center;color:#B4B1AF;text-align:center;padding:16px}
+.frame{position:absolute;inset:20% 22%;pointer-events:none;background:linear-gradient(#D9434E,#D9434E) top left/30px 4px no-repeat,linear-gradient(#D9434E,#D9434E) top left/4px 30px no-repeat,linear-gradient(#D9434E,#D9434E) top right/30px 4px no-repeat,linear-gradient(#D9434E,#D9434E) top right/4px 30px no-repeat,linear-gradient(#D9434E,#D9434E) bottom left/30px 4px no-repeat,linear-gradient(#D9434E,#D9434E) bottom left/4px 30px no-repeat,linear-gradient(#D9434E,#D9434E) bottom right/30px 4px no-repeat,linear-gradient(#D9434E,#D9434E) bottom right/4px 30px no-repeat}
+.st{min-height:24px}.st.bad{color:var(--bad)}.st.warn{color:var(--warn)}.st.ok{color:var(--ok)}
+dl.kv{margin:0;display:grid;grid-template-columns:auto 1fr;gap:8px 14px}dl.kv dt{color:var(--mut);font-size:13px;font-weight:600}dl.kv dd{margin:0;word-break:break-word}
+.big{font-size:19px;font-weight:700}
+.bars{display:grid;gap:12px}.bar-r{display:grid;grid-template-columns:minmax(80px,140px) 1fr 48px;gap:10px;align-items:center;font-size:13.5px;font-weight:600}
+.bar-r .trk{height:10px;border-radius:99px;background:var(--bg);overflow:hidden}.bar-r .trk i{display:block;height:100%;border-radius:99px;min-width:3px}.bar-r .num{text-align:right}
+.wk{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;height:150px}.wkc{display:flex;flex-direction:column;gap:6px}.wkb{flex:1;display:flex;align-items:flex-end;gap:3px}.wkb i{flex:1;min-height:3px;border-radius:5px 5px 2px 2px}.wkc span{text-align:center;font-size:12.5px;color:var(--mut);font-weight:600}
+.dn{display:flex;gap:22px;align-items:center;flex-wrap:wrap}.dn svg{flex:none}
+.lg{display:grid;gap:8px;flex:1 1 180px}.lg div{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600}.lg .dot{width:10px;height:10px;border-radius:50%;flex:none}.lg .v{margin-left:auto}
+.dotl{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.steps{display:grid;gap:10px;padding-left:18px;margin:8px 0 0}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);padding:22px;width:min(460px,92vw)}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:20;max-width:92vw;padding:11px 18px;border-radius:12px;background:var(--ink);color:var(--panel);font-size:14.5px;font-weight:600;display:none}
+textarea.tx{min-height:150px;font:13px/1.4 "IBM Plex Mono",monospace}
+.foot{font-size:12.5px;color:var(--mut)}
+.me{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:4px 0 8px}
+.who{display:flex;gap:10px;align-items:center;min-width:0}.who b{display:block;font-size:13.5px;line-height:1.2}.who small{color:var(--mut);font-size:12px}
+.av{width:34px;height:34px;border-radius:50%;background:var(--accsoft);color:var(--acc);display:grid;place-items:center;font-weight:800;font-size:12.5px;flex:none}
+.locked .side{display:none}.locked .shell{display:block}.locked main{max-width:none;padding:0}
+.portal{display:grid;min-height:100vh}
+@media(min-width:900px){.portal{grid-template-columns:1.1fr .9fr}}
+.portal-l{background:linear-gradient(155deg,#3A1217 0%,#141012 55%,#0B0B0C 100%);color:#fff;padding:28px;display:flex;flex-direction:column;gap:28px;justify-content:space-between}
+@media(min-width:900px){.portal-l{padding:48px}}
+.portal-l .brand{color:#fff}.portal-l .brand small{color:rgba(255,255,255,.8)}.portal-l .logo{background:#D9434E;color:#fff}
+.ph{font-size:30px;line-height:1.2;font-weight:800;letter-spacing:-.01em;margin:0}@media(min-width:900px){.ph{font-size:38px}}
+.pf{margin:0;padding:0;list-style:none;display:grid;gap:10px;font-weight:600;color:rgba(255,255,255,.92)}
+.pf li::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#D9434E;margin-right:10px}
+.team{display:grid;gap:8px;font-size:13px;color:rgba(255,255,255,.9)}.tl{font-weight:700}.tg{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:4px 20px}
+.portal-r{display:grid;place-items:center;padding:28px;background:var(--bg)}
+.lg-card{width:min(420px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:var(--sh);display:grid;gap:14px}
+.lg-card .brand{font-size:20px}
+.dmc{width:260px;max-width:100%;height:auto;image-rendering:pixelated;background:#fff;border:1px solid var(--line);border-radius:10px}
+.sheet{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:14px}
+.fig{margin:0;display:grid;gap:6px;justify-items:center;font-size:12.5px;color:var(--mut);font-weight:600}
+.dms{width:120px;height:auto;image-rendering:pixelated;background:#fff;border:1px solid var(--line);border-radius:8px}
+.code{font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:600;font-size:13px;word-break:break-all;background:var(--bg);border-radius:8px;padding:10px 12px}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="shell">
+<aside class="side"><div class="brand"><span class="logo" id="logo"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span>Dona Helena<small>Controle de medicamentos</small></span></div><span class="pill" id="src">Conectando</span><nav id="nav" aria-label="Seções"></nav><div class="me" id="me"></div></aside>
+<main id="app"></main>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"></script>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),GS='\x1d',DAY=864e5;
+const h=(t,a,...c)=>{const e=document.createElement(t);for(const k in a||{}){const v=a[k];if(v==null||v===false)continue;if(k==='class')e.className=v;else if(k.slice(0,2)==='on')e[k]=v;else e.setAttribute(k,v===true?'':v)}for(const x of c.flat(9))if(x!=null&&x!==false)e.append(x);return e};
+const p2=n=>String(n).padStart(2,'0');
+const iso=d=>d?d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate()):'';
+const fromIso=s=>s?new Date(s+'T00:00:00'):null;
+const dbr=s=>{const d=fromIso(s);return d?p2(d.getDate())+'/'+p2(d.getMonth()+1)+'/'+d.getFullYear():'—'};
+const today=()=>{const t=new Date();t.setHours(0,0,0,0);return t};
+const daysLeft=s=>{const d=fromIso(s);return d?Math.round((d-today())/DAY):null};
+const nf=n=>Number(n).toLocaleString('pt-BR');
+const SETORES=['Farmácia central','UTI','Pronto-socorro','Centro cirúrgico','Enfermaria','Ambulatório'];
+const CATS=['Analgésico','Antiespasmódico','Antiemético','Antibiótico','Cardiovascular','Controlado','Emergência','Gastro','Hormônio','Soluções','Outros'];
+function sev(d){if(d==null)return['sem','Sem validade'];if(d<0)return['bad','Vencido há '+(-d)+' d'];if(d===0)return['bad','Vence hoje'];if(d<=7)return['crit','Vence em '+d+' d'];if(d<=30)return['warn','Vence em '+d+' d'];return['ok',d+' dias']}
+const tag=d=>{const[k,l]=sev(d);return h('span',{class:'tag '+k},l)};
+
+/* ---------- GS1 ---------- */
+const AI={'00':[18,0],'01':[14,0],'02':[14,0],'10':[0,20],'11':[6,0],'13':[6,0],'15':[6,0],'17':[6,0],'21':[0,20],'30':[0,8],'37':[0,8],'240':[0,30],'400':[0,30]};
+function parseGS1(raw){
+  let s=String(raw).trim().replace(/^\][A-Za-z]\d/,'').replace(/<GS>|\{GS\}|\u241D/g,GS);const out={};
+  if(/\(\d{2,4}\)/.test(s)){for(const m of s.matchAll(/\((\d{2,4})\)([^(]*)/g))out[m[1]]=m[2].replace(/\x1d/g,'').trim();return out}
+  let i=0;
+  while(i<s.length){
+    if(s[i]===GS){i++;continue}
+    let ai=null;for(const n of[2,3,4]){const k=s.substr(i,n);if(AI[k]){ai=k;break}}
+    if(!ai)throw new Error('Código GS1 não reconhecido perto da posição '+(i+1)+'.');
+    i+=ai.length;const[fx,mx]=AI[ai];let v;
+    if(fx){v=s.substr(i,fx);if(v.length<fx)throw new Error('O campo '+ai+' está incompleto.');i+=fx}
+    else{const j=s.indexOf(GS,i),end=j<0?s.length:j;v=s.substring(i,Math.min(end,i+mx));i+=v.length}
+    out[ai]=v;
+  }
+  return out;
+}
+const norm=g=>{const c=String(g||'').replace(/\D/g,'');return c?c.padStart(14,'0'):''};
+const ck=b=>{let s=0;b.split('').reverse().forEach((x,i)=>s+=x*(i%2?1:3));return(10-s%10)%10};
+const gtinOk=g=>{if(!/^\d{8,14}$/.test(g))return false;return ck(g.slice(0,-1))===+g.slice(-1)};
+function pd(s){if(!/^\d{6}$/.test(s||''))return null;const y=2000+ +s.slice(0,2),m=+s.slice(2,4);let d=+s.slice(4);if(m<1||m>12)return null;const last=new Date(y,m,0).getDate();if(d===0)d=last;if(d>last)return null;return new Date(y,m-1,d)}
+
+const SAMPLE_M=[['Dorflex','Dipirona 300 mg + orfenadrina 35 mg + cafeína 50 mg, comprimido','Analgésico',0,0,200],['Neosaldina','Dipirona 300 mg + isometepteno 30 mg + cafeína 30 mg, drágea','Analgésico',0,0,120],['Novalgina','Dipirona sódica 500 mg, comprimido','Analgésico',0,0,150],['Tylenol 750 mg','Paracetamol 750 mg, comprimido','Analgésico',0,0,150],['Buscopan Composto','Butilbrometo de escopolamina 10 mg + dipirona 250 mg, drágea','Antiespasmódico',0,0,100],['Dramin','Dimenidrinato 50 mg, comprimido','Antiemético',0,0,80],['Amoxicilina 500 mg','Cápsula','Antibiótico',0,0,120],['Ceftriaxona 1 g','Pó para solução injetável, frasco-ampola','Antibiótico',0,0,80],['Soro fisiológico 0,9%','Solução injetável, bolsa 500 mL','Soluções',0,0,400],['Insulina NPH','Suspensão injetável 100 UI/mL, frasco 10 mL','Hormônio',0,1,30],['Morfina 10 mg/mL','Solução injetável, ampola 1 mL','Controlado',1,0,40],['Diazepam 10 mg','Comprimido','Controlado',1,0,50],['Adrenalina 1 mg/mL','Solução injetável, ampola 1 mL','Emergência',0,0,60],['Omeprazol 40 mg','Pó para solução injetável, frasco-ampola','Gastro',0,0,60]];
+const SG=SAMPLE_M.map((_,i)=>{const b='7890000000'+p2(i+1);return norm(b+ck(b))});
+const sampleProd=g=>{const i=SG.indexOf(g);if(i<0)return null;const m=SAMPLE_M[i];return{nome:m[0],apres:m[1],cat:m[2],ctrl:!!m[3],frio:!!m[4],min:m[5]}};
+
+/* ---------- estado e armazenamento ---------- */
+const S={lotes:[],prod:{},cfg:{dias:[30,15,7,3,0]},ev:[],mode:'local',_w:true,me:{id:null},names:{},users:[],usersLoaded:false};
+let SESSION=null;
+const ROLE_LABEL={admin:'Administrador',operador:'Operador',consulta:'Somente consulta'};
+function role(){return SESSION?SESSION.papel:'consulta'}
+function isAdmin(){return role()==='admin'}
+Object.defineProperty(S,'write',{get(){return this._w&&role()!=='consulta'},set(v){this._w=v}});
+const SK='vc_sess';
+function loadSess(){try{const v=sessionStorage.getItem(SK)||localStorage.getItem(SK);return v?JSON.parse(v):null}catch(e){return null}}
+function saveSess(u,keep){const v=JSON.stringify({id:u.id,nome:u.nome,usuario:u.usuario||u.id,papel:u.papel,mc:!!u.mc});try{(keep?localStorage:sessionStorage).setItem(SK,v)}catch(e){}}
+function clearSess(){try{sessionStorage.removeItem(SK);localStorage.removeItem(SK)}catch(e){}}
+const b2h=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+function newSalt(){const a=new Uint8Array(12);if(window.crypto&&crypto.getRandomValues)crypto.getRandomValues(a);else for(let i=0;i<12;i++)a[i]=Math.floor(Math.random()*256);return b2h(a)}
+async function hashPw(pw,salt){
+  if(window.crypto&&crypto.subtle&&typeof TextEncoder!=='undefined'){const k=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveBits']);return b2h(await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(salt),iterations:100000,hash:'SHA-256'},k,256))}
+  let h1=0xdeadbeef,h2=0x41c6ce57;const t=salt+pw;for(let i=0;i<t.length;i++){const c=t.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return'w'+(4294967296*(2097151&h2)+(h1>>>0)).toString(16)}
+const uName=id=>{if(!id||id==='local')return'Este aparelho';const u=S.users.find(x=>x.id===id);return u?u.nome:'Usuário removido'};
+let db=null,userCap=null;
+const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+let DEMO=LS.get('vc_demo',false);
+function toggleDemo(){DEMO=!DEMO;LS.set('vc_demo',DEMO);toast(DEMO?'Modo de demonstração ativado: exemplos visíveis.':'Modo de demonstração desativado.');route()}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const persist=()=>{LS.set('vc_lotes',S.lotes);LS.set('vc_prod',S.prod);LS.set('vc_cfg',S.cfg);LS.set('vc_ev',S.ev.slice(0,100))};
+const who=()=>SESSION?SESSION.id:'local';
+async function wAdd(c,o){if(S.mode==='db')return db.collection(c).add(o);o.id=uid();(c==='lotes'?S.lotes:S.ev).unshift(o);if(c==='eventos')S.ev.sort((a,b)=>b.t-a.t);persist();changed()}
+async function wUpd(id,p){if(S.mode==='db')return db.collection('lotes').doc(id).update(p);const l=S.lotes.find(x=>x.id===id);if(l)Object.assign(l,p);persist();changed()}
+async function wDel(id){if(S.mode==='db')return db.collection('lotes').doc(id).delete();S.lotes=S.lotes.filter(x=>x.id!==id);persist();changed()}
+async function wDelAny(c,id){if(S.mode==='db')return db.collection(c).doc(id).delete();if(c==='lotes')S.lotes=S.lotes.filter(x=>x.id!==id);else if(c==='eventos')S.ev=S.ev.filter(x=>x.id!==id);else delete S.prod[id];persist();changed()}
+async function wUser(u){if(S.mode==='db')return db.doc('usuarios/'+u.id).set(u);const i=S.users.findIndex(x=>x.id===u.id);if(i<0)S.users.push(u);else S.users[i]=u;LS.set('vc_users',S.users);changed()}
+async function wUserDel(id){if(S.mode==='db')return db.doc('usuarios/'+id).delete();S.users=S.users.filter(x=>x.id!==id);LS.set('vc_users',S.users);changed()}
+async function wProd(g,o){if(S.mode==='db')return db.doc('produtos/'+g).set(o);S.prod[g]=o;persist();changed()}
+async function wCfg(o){if(S.mode==='db')return db.doc('config/alertas').set(o);S.cfg=o;persist();changed()}
+const log=(tipo,l,qtd,destino,t)=>wAdd('eventos',{t:t||Date.now(),tipo,gtin:l.gtin||'',lote:l.lote||'',val:l.val||'',qtd,carga:l.carga||'',destino:destino||'',by:who()});
+async function act(fn,okMsg){try{await fn();if(okMsg)toast(okMsg)}catch(e){toast('Não foi possível salvar'+(e&&e.code?' ('+e.code+')':'')+'.','bad')}}
+function subscribe(){
+  const bad=e=>toast('Falha de conexão com o banco'+(e&&e.code?' ('+e.code+')':'')+'.','bad');
+  db.collection('usuarios').onSnapshot(s=>{S.users=s.docs.map(d=>({...d.data(),id:d.id}));S.usersLoaded=true;changed()},e=>{S.usersLoaded=true;bad(e)});
+  db.collection('lotes').onSnapshot(s=>{S.lotes=s.docs.map(d=>({...d.data(),id:d.id}));changed()},bad);
+  db.collection('produtos').onSnapshot(s=>{const m={};s.docs.forEach(d=>m[d.id]=d.data());S.prod=m;changed()},bad);
+  db.doc('config/alertas').onSnapshot(s=>{if(s.exists){S.cfg={...S.cfg,...s.data()};changed()}},bad);
+  db.collection('eventos').orderBy('t','desc').limit(100).onSnapshot(s=>{S.ev=s.docs.map(d=>({...d.data(),id:d.id}));resolveNames();changed()},bad);
+}
+async function resolveNames(){
+  if(!userCap||!userCap.profiles)return;const ids=[...new Set(S.ev.map(e=>e.by).filter(x=>x&&x!=='local'&&!(x in S.names)))];if(!ids.length)return;
+  try{const ps=await userCap.profiles(ids);ids.forEach(i=>S.names[i]=(ps[i]&&ps[i].name)||'Colaborador');changed()}catch(e){}
+}
+
+/* ---------- regras de negócio ---------- */
+const P=g=>S.prod[g]||S.prod[norm(g)]||{};
+const prodName=g=>P(g).nome||'';
+const enr=()=>S.lotes.map(l=>{const p=P(l.gtin);return{...l,qtd:Number(l.qtd)||0,d:daysLeft(l.val),nome:p.nome||'',apres:p.apres||'',cat:p.cat||'Outros',ctrl:!!p.ctrl,frio:!!p.frio,bloq:!!l.bloq}});
+const by=(a,b)=>(a.d??9e9)-(b.d??9e9);
+const sum=(a,f)=>a.reduce((s,x)=>s+f(x),0);
+function alerts(){
+  const E=enr(),max=Math.max(30,...(S.cfg.dias||[])),av=E.filter(l=>!l.bloq&&l.d!=null);
+  const venc=av.filter(l=>l.d<0).sort(by),crit=av.filter(l=>l.d>=0&&l.d<=7).sort(by),warn=av.filter(l=>l.d>7&&l.d<=max).sort(by),bloq=E.filter(l=>l.bloq);
+  const tot={};E.filter(l=>!l.bloq).forEach(l=>tot[l.gtin]=(tot[l.gtin]||0)+l.qtd);
+  const low=Object.entries(S.prod).filter(([g,p])=>Number(p.min)>0&&(tot[g]||0)<Number(p.min)).map(([g,p])=>({gtin:g,nome:p.nome,min:Number(p.min),qtd:tot[g]||0}));
+  return{venc,crit,warn,bloq,low,max,n:venc.length+crit.length+warn.length+bloq.length+low.length};
+}
+function digest(){
+  const A=alerts(),f=l=>'• '+(l.nome||l.gtin)+(l.apres?' ('+l.apres+')':'')+' | lote '+(l.lote||'s/ lote')+' | '+dbr(l.val)+' ('+sev(l.d)[1]+') | '+l.qtd+' un'+(l.local?' | '+l.local:'');
+  const sec=(t,a)=>a.length?t+' ('+a.length+'):\n'+a.map(f).join('\n')+'\n\n':'';
+  return 'Resumo de medicamentos em '+dbr(iso(new Date()))+'\n\n'+(A.n?sec('Vencidos',A.venc)+sec('Vencem em até 7 dias',A.crit)+sec('Vencem em até '+A.max+' dias',A.warn)+sec('Lotes bloqueados',A.bloq)+(A.low.length?'Estoque abaixo do mínimo ('+A.low.length+'):\n'+A.low.map(x=>'• '+(x.nome||x.gtin)+': '+x.qtd+' de '+x.min).join('\n'):''):'Nenhum alerta no momento.').trim();
+}
+function notifyCheck(){
+  if(!('Notification' in window)||Notification.permission!=='granted'||!LS.get('vc_notif',false))return;
+  const seen=LS.get('vc_seen',{}),dias=[...(S.cfg.dias||[])].sort((a,b)=>a-b),fresh=[];
+  for(const l of enr()){if(l.d==null||l.bloq)continue;const t=l.d<0?'v':dias.find(x=>l.d<=x);if(t==null)continue;const k=l.id+'|'+t;if(seen[k])continue;seen[k]=1;fresh.push(l)}
+  if(!fresh.length)return;LS.set('vc_seen',seen);
+  try{if(fresh.length>3)new Notification('Dona Helena: '+fresh.length+' lotes precisam de atenção',{body:fresh.slice(0,3).map(l=>(l.nome||l.gtin)+' '+sev(l.d)[1]).join('; ')+'…'});
+    else fresh.forEach(l=>new Notification((l.nome||l.gtin)+': '+sev(l.d)[1],{body:'Lote '+(l.lote||'s/ lote')+', validade '+dbr(l.val)+', '+l.qtd+' un.'}))}catch(e){}
+}
+
+/* ---------- interface básica ---------- */
+const app=$('app');let tt=0;
+function toast(m,k){const e=$('toast');e.textContent=m;e.style.display='block';e.style.background=k==='bad'?'var(--bad)':'';e.style.color=k==='bad'?'#fff':'';clearTimeout(tt);tt=setTimeout(()=>e.style.display='none',3600)}
+function dlg(title,body,onOk,okLabel){const d=h('dialog',{},h('h2',{},title),body,h('div',{class:'row end'},h('button',{onclick:()=>d.close()},'Cancelar'),onOk&&h('button',{class:'main',onclick:async()=>{if(await onOk()!==false)d.close()}},okLabel||'Confirmar')));d.addEventListener('close',()=>d.remove());document.body.append(d);d.showModal();return d}
+async function saveFile(name,text){
+  let d=null;try{d=typeof claude!=='undefined'?await claude.use('downloads'):null}catch(e){}
+  if(d){try{await d.save({filename:name,data:text});return}catch(e){if(e&&e.code==='declined')return}}
+  try{await navigator.clipboard.writeText(text);toast('Conteúdo copiado. Cole em uma planilha ou arquivo.')}catch(e){const t=h('textarea',{class:'tx',readonly:true});t.value=text;dlg('Copie o texto abaixo',t);t.select()}
+}
+const q_=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+const csv=(H,rows)=>'\ufeff'+[H.join(';')].concat(rows.map(r=>r.map(q_).join(';'))).join('\n');
+const csvEstoque=()=>csv(['medicamento','apresentacao','categoria','controlado','refrigerado','gtin','lote','validade','dias_restantes','quantidade','local','bloqueado','situacao'],enr().sort(by).map(l=>[l.nome,l.apres,l.cat,l.ctrl?'sim':'nao',l.frio?'sim':'nao',l.gtin,l.lote,l.val,l.d,l.qtd,l.local,l.bloq?'sim':'nao',l.bloq?'Bloqueado':sev(l.d)[1]]));
+const csvMov=()=>csv(['data_hora','tipo','medicamento','gtin','lote','quantidade','destino','carga'],S.ev.map(e=>[new Date(e.t).toLocaleString('pt-BR'),e.tipo,prodName(e.gtin),e.gtin,e.lote,e.qtd,e.destino,e.carga]));
+const ICON={home:'<path d="M3 11 12 3l9 8"/><path d="M5 10v10h14V10"/>',scan:'<path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/>',box:'<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5z"/><path d="M3 7.5 12 12l9-4.5M12 12v9"/>',bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/>',pill:'<path d="M10.5 20.5a5 5 0 0 1-7-7l9-9a5 5 0 0 1 7 7z"/><path d="m8.5 8.5 7 7"/>',swap:'<path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/>',chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',sliders:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10M14 5v4M6 15v4"/>',alert:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17.5v.01"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',lock:'<rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',shield:'<path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/>',qr:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M20 20v.01M17 20h.01"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 14.5A6.5 6.5 0 0 1 21.5 20"/>'};
+const NAVI={inicio:'home',ler:'scan',gerar:'qr',estoque:'box',alertas:'bell',medicamentos:'pill',movimentacoes:'swap',relatorios:'chart',usuarios:'users',ajustes:'sliders'};
+const ico=n=>{const e=document.createElement('span');e.className='ico';e.innerHTML='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+ICON[n]+'</svg>';return e};
+const ROUTES=[['inicio','Início'],['ler','Ler código'],['gerar','Gerar DataMatrix'],['estoque','Estoque'],['alertas','Alertas'],['medicamentos','Medicamentos'],['movimentacoes','Movimentações'],['relatorios','Relatórios'],['usuarios','Usuários'],['ajustes','Ajustes']];
+const routes=()=>ROUTES.filter(r=>r[0]!=='usuarios'||isAdmin());
+const cur=()=>{const r=location.hash.slice(1);return routes().some(x=>x[0]===r)?r:'inicio'};
+const initials=n=>String(n||'?').trim().split(/\s+/).slice(0,2).map(x=>x[0]).join('').toUpperCase();
+function renderNav(){const n=alerts().n,c=cur(),nav=$('nav'),me=$('me');nav.textContent='';routes().forEach(([k,l])=>nav.append(h('button',{class:'tab','aria-current':k===c?'page':null,onclick:()=>{location.hash=k}},ico(NAVI[k]),l,k==='alertas'&&n>0&&h('span',{class:'cnt'},n))));
+  $('src').textContent=S.mode==='db'?(S.write||role()==='consulta'?'Banco compartilhado':'Só leitura'):'Neste aparelho';
+  me.textContent='';if(SESSION)me.append(h('div',{class:'who'},h('span',{class:'av'},initials(SESSION.nome)),h('span',{},h('b',{},SESSION.nome),h('small',{},ROLE_LABEL[SESSION.papel]||SESSION.papel))),h('button',{class:'sm',onclick:logout},'Sair'))}
+const editing=()=>{const a=document.activeElement;return a&&app.contains(a)&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)};
+function changed(){
+  if(SESSION&&S.usersLoaded){const u=S.users.find(x=>x.id===SESSION.id);if(!u||u.ativo===false){logout();return}if(u.papel!==SESSION.papel||u.nome!==SESSION.nome||!!u.mustChange!==!!SESSION.mc){SESSION={...SESSION,papel:u.papel,nome:u.nome,mc:!!u.mustChange}}}
+  renderNav();if(cur()==='ler')refreshLer();else if(!editing()&&!document.querySelector('dialog[open]'))route();notifyCheck()}
+function route(){
+  if(!SESSION){stopCam();document.body.className='locked';app.textContent='';app.append(loginView());return}
+  if(SESSION.mc){document.body.className='locked';app.textContent='';app.append(forcePwView());return}
+  document.body.className='';const r=cur();if(r!=='ler')stopCam();renderNav();app.textContent='';app.append(r==='ler'?lerEl():VIEWS[r]());if(r==='ler')L_.sync()}
+addEventListener('hashchange',()=>{if(location.hash==='#demo'){location.hash='inicio';toggleDemo();return}route()});
+const goLer=m=>{mode=m;if(cur()==='ler')route();else location.hash='ler'};
+
+/* ---------- login ---------- */
+function logout(){SESSION=null;clearSess();stopCam();L_=null;sessao=[];route()}
+async function doFirst(nome,usuario,senha){
+  const id=String(usuario).trim().toLowerCase();
+  if(!/^[a-z0-9][a-z0-9._-]{2,29}$/.test(id))return'Usuário: 3 a 30 caracteres (letras minúsculas, números, ponto, _ ou -).';if(String(senha).length<MIN_PW)return'A senha precisa ter ao menos '+MIN_PW+' caracteres.';
+  const salt=newSalt(),u={id,usuario:id,nome:String(nome||'').trim()||id,papel:'admin',ativo:true,salt,hash:await hashPw(senha,salt),t:Date.now()};
+  try{await wUser(u)}catch(e){return'Não foi possível criar o usuário.'}
+  SESSION={id,nome:u.nome,usuario:id,papel:'admin'};saveSess(SESSION,false);route();return''}
+async function doLogin(usuario,senha,keep){
+  const u=S.users.find(x=>x.id===String(usuario).trim().toLowerCase());
+  if(!u||u.ativo===false||await hashPw(senha,u.salt)!==u.hash)return'Usuário ou senha incorretos.';
+  SESSION={id:u.id,nome:u.nome,usuario:u.id,papel:u.papel,mc:!!u.mustChange};saveSess(SESSION,!!keep);route();return''}
+const MIN_PW=6,DEFAULT_PW='1234';
+const TEAM=['Fabrício Borghezan','Felipe Matheus Pereira','Gabriel Mendonça da Silveira','Edemilson Rangel','Filipe Ayres de Souza Bruner','Geovane Jamil Pereira Filho','Gustavo de Borba','Pedro Guilherme da Luz'];
+function portal(card){
+  return h('div',{class:'portal'},
+    h('section',{class:'portal-l'},
+      h('div',{class:'brand'},h('span',{class:'logo'},ico('cross')),h('span',{},'Dona Helena',h('small',{},'Controle de medicamentos'))),
+      h('div',{style:'display:grid;gap:18px'},h('h1',{class:'ph'},'Cada medicamento rastreado, do recebimento ao setor.'),h('ul',{class:'pf'},['Leitura do DataMatrix GS1 pela câmera ou leitor','Alertas de validade, bloqueio de lote e estoque mínimo','Painel por prazo, categoria e setor de destino'].map(t=>h('li',{},t)))),
+      h('div',{class:'team'},h('p',{class:'tl'},'Projeto da matéria PACEXT II'),h('div',{class:'tg'},TEAM.map(n=>h('span',{},n))))),
+    h('section',{class:'portal-r'},card));
+}
+async function resetToDefault(u){const salt=newSalt();return wUser({...u,salt,hash:await hashPw(DEFAULT_PW,salt),mustChange:true})}
+async function doForcePw(nova,rep){
+  const u=S.users.find(x=>x.id===(SESSION&&SESSION.id));if(!u)return'Usuário não encontrado.';
+  if(String(nova).length<MIN_PW)return'A senha precisa ter ao menos '+MIN_PW+' caracteres.';
+  if(nova!==rep)return'As senhas não conferem.';
+  if(await hashPw(nova,u.salt)===u.hash)return'Escolha uma senha diferente da temporária.';
+  const salt=newSalt();try{await wUser({...u,salt,hash:await hashPw(nova,salt),mustChange:false})}catch(e){return'Não foi possível salvar a senha.'}
+  let keep=false;try{keep=!!localStorage.getItem(SK)}catch(e){}
+  SESSION={...SESSION,mc:false};saveSess(SESSION,keep);route();return''}
+function forcePwView(){
+  const a=h('input',{type:'password',autocomplete:'new-password',placeholder:'Nova senha (mínimo '+MIN_PW+' caracteres)'}),b=h('input',{type:'password',autocomplete:'new-password',placeholder:'Repita a nova senha'}),msg=h('p',{class:'st bad',role:'alert'});
+  const go=async()=>{msg.textContent=await doForcePw(a.value,b.value)};
+  [a,b].forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
+  return portal(h('div',{class:'lg-card'},h('div',{},h('h1',{style:'font-size:22px'},'Crie sua senha'),h('p',{class:'sub',style:'margin-top:4px'},'Olá, '+SESSION.nome.split(' ')[0]+'. Este é seu primeiro acesso: troque a senha temporária para continuar.')),h('label',{},'Nova senha',a),h('label',{},'Repita a nova senha',b),msg,h('button',{class:'main',onclick:go},'Salvar e entrar'),h('button',{onclick:logout},'Sair')));
+}
+function loginView(){
+  if(!S.usersLoaded)return portal(h('div',{class:'lg-card'},h('p',{class:'sub'},'Carregando…')));
+  const first=!S.users.length,msg=h('p',{class:'st bad',role:'alert'});
+  const us=h('input',{placeholder:first?'ex.: helena.admin':'ex.: nome.sobrenome',autocomplete:'username',autocapitalize:'none'}),pw=h('input',{type:'password',placeholder:'Senha',autocomplete:first?'new-password':'current-password'}),keep=h('input',{type:'checkbox'});
+  const go=async()=>{msg.textContent='';if(first){msg.textContent=await doFirst('',us.value,pw.value)}else msg.textContent=await doLogin(us.value,pw.value,keep.checked)};
+  [us,pw].forEach(i=>i.addEventListener('keydown',e=>{if(e.key==='Enter')go()}));
+  return portal(h('div',{class:'lg-card'},h('div',{},h('h1',{style:'font-size:22px'},first?'Primeiro acesso':'Entrar'),h('p',{class:'sub',style:'margin-top:4px'},first?'Crie o administrador do sistema. Depois você cadastra os demais usuários.':'Use o usuário e a senha que você recebeu.')),
+    h('label',{},'Usuário',us),h('label',{},'Senha',pw),
+    first?null:h('label',{class:'chk'},keep,'Manter conectado neste aparelho'),msg,h('button',{class:'main',onclick:go},first?'Criar administrador':'Entrar')));
+}
+
+/* ---------- componentes ---------- */
+const PAL=['var(--c-acc)','var(--c-frio)','var(--c-ctrl)','var(--c-warn)','var(--c-ok)','var(--c-crit)','var(--c-mut)'];
+const bars=(items,fmt)=>{const mx=Math.max(1,...items.map(i=>i[1]));return h('div',{class:'bars'},items.length?items.map(([n,v,c],i)=>h('div',{class:'bar-r'},h('span',{},n),h('div',{class:'trk'},h('i',{style:'width:'+(v/mx*100)+'%;background:'+(c||PAL[i%PAL.length])})),h('span',{class:'num mono'},fmt?fmt(v):nf(v)))):h('p',{class:'empty'},'Sem dados.'))};
+const badges=l=>h('span',{class:'badges'},l.ctrl&&h('span',{class:'tag ctrl'},'Controlado'),l.frio&&h('span',{class:'tag frio'},'Refrigerado'));
+const cMed=l=>h('td',{},h('b',{},l.nome||h('span',{class:'mono'},l.gtin||'—')),badges(l),l.apres&&h('small',{},l.apres));
+const cLote=l=>h('td',{class:'mono'},l.lote||'—');
+const cVal=l=>h('td',{},dbr(l.val));
+const cTag=l=>h('td',{},l.bloq?h('span',{class:'tag bad',title:l.motivo||''},'Bloqueado'):tag(l.d));
+const cQtd=l=>h('td',{class:'num mono'},nf(l.qtd));
+const cLoc=l=>h('td',{},l.local||'—');
+const rows=(list,cols)=>list.map(l=>h('tr',{},cols.map(c=>c(l))));
+const evTag=t=>h('span',{class:'tag '+({entrada:'ok',saida:'warn',exclusao:'bad'}[t]||'sem')},{entrada:'Recebimento',saida:'Dispensação',exclusao:'Exclusão',ajuste:'Ajuste'}[t]||t);
+const panel=(title,...c)=>h('div',{class:'panel'},title&&h('h2',{},title),...c);
+const tbl=(head,body,w)=>h('div',{class:'tw'},h('table',w?{style:'min-width:'+w+'px'}:{},h('thead',{},h('tr',{},head.map(x=>h('th',{class:x[0]==='#'?'num':''},x.replace(/^#/,''))))),h('tbody',{},body)));
+
+/* ---------- início (dashboard) ---------- */
+function semana(){
+  const days=[];for(let i=6;i>=0;i--){const d=today();d.setDate(d.getDate()-i);days.push(d)}
+  const r=days.map(d=>{const a=d.getTime(),E=S.ev.filter(e=>e.t>=a&&e.t<a+DAY);return{lab:['dom','seg','ter','qua','qui','sex','sáb'][d.getDay()],e:sum(E.filter(x=>x.tipo==='entrada'),x=>+x.qtd||0),s:sum(E.filter(x=>x.tipo==='saida'),x=>+x.qtd||0)}});
+  const m=Math.max(1,...r.map(x=>Math.max(x.e,x.s)));
+  return h('div',{class:'wk','aria-label':'Recebimentos e dispensações dos últimos 7 dias'},r.map(x=>h('div',{class:'wkc'},h('div',{class:'wkb'},h('i',{style:'height:'+x.e/m*100+'%;background:var(--c-frio)',title:x.e+' recebidas'}),h('i',{style:'height:'+x.s/m*100+'%;background:var(--c-crit)',title:x.s+' dispensadas'})),h('span',{},x.lab))));
+}
+function kpi(i,c,tint,val,label,hint){return h('div',{class:'kpi',style:'--c:'+c+';--tint:'+tint},h('div',{class:'top'},h('span',{},label),ico(i)),h('b',{},val),h('small',{},hint))}
+function donut(parts,total){
+  const C=2*Math.PI*52;let off=0,seg='';
+  for(const[,v,c]of parts){if(v<=0)continue;const len=v/total*C;seg+='<circle cx="70" cy="70" r="52" fill="none" style="stroke:'+c+'" stroke-width="16" stroke-dasharray="'+len.toFixed(2)+' '+(C-len).toFixed(2)+'" stroke-dashoffset="'+(-off).toFixed(2)+'"/>';off+=len}
+  const w=document.createElement('span');
+  w.innerHTML='<svg viewBox="0 0 140 140" width="168" height="168" role="img" aria-label="Unidades por situação de validade"><g transform="rotate(-90 70 70)"><circle cx="70" cy="70" r="52" fill="none" style="stroke:var(--bg)" stroke-width="16"/>'+seg+'</g><text x="70" y="70" text-anchor="middle" style="fill:var(--ink);font:800 24px Manrope,sans-serif">'+nf(total)+'</text><text x="70" y="90" text-anchor="middle" style="fill:var(--mut);font:600 11px Manrope,sans-serif">unidades</text></svg>';
+  return w;
+}
+function inicio(){
+  const E=enr(),A=alerts(),av=E.filter(l=>!l.bloq),wrap=h('div',{style:'display:grid;gap:18px'}),now=Date.now();
+  const dt=new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  wrap.append(h('div',{class:'pagehead'},h('div',{},h('h1',{},'Visão geral'),h('p',{class:'sub'},'Olá, '+(SESSION?SESSION.nome.split(' ')[0]:'')+'. '+dt.charAt(0).toUpperCase()+dt.slice(1)+'.')),h('div',{class:'row'},h('button',{disabled:!S.write,onclick:()=>goLer('saida')},'Dispensar'),h('button',{class:'main',disabled:!S.write,onclick:()=>goLer('entrada')},'Receber medicamento'))));
+  if(!E.length&&!Object.keys(S.prod).length){
+    wrap.append(panel('Comece por aqui',h('ol',{class:'steps'},h('li',{},'Cadastre os medicamentos (nome, apresentação, categoria, controlado, refrigerado e estoque mínimo) na aba Medicamentos.'),h('li',{},'Receba os lotes lendo o DataMatrix da embalagem, na aba Ler código.'),h('li',{},'Dispense para os setores (UTI, pronto-socorro, enfermaria) lendo o código de novo no modo Dispensar.'),h('li',{},'Acompanhe aqui o que vence primeiro, o que está bloqueado e o que precisa de reposição.')),h('div',{class:'row',style:'margin-top:14px'},DEMO&&h('button',{class:'main',disabled:!S.write,onclick:loadSample},'Carregar exemplo com medicamentos'),h('button',{class:DEMO?'':'main',onclick:()=>{location.hash='ler'}},'Ir para a leitura'),h('button',{disabled:!S.write,onclick:()=>medDlg('')},'Novo medicamento'))));
+  }
+  if(A.venc.length||A.crit.length||A.bloq.length||A.low.length)wrap.append(h('div',{class:'banner '+(A.venc.length||A.bloq.length?'bad':'warn')},h('span',{},[A.venc.length&&A.venc.length+' vencido(s)',A.crit.length&&A.crit.length+' vencem em até 7 dias',A.bloq.length&&A.bloq.length+' bloqueado(s)',A.low.length&&A.low.length+' abaixo do mínimo'].filter(Boolean).join(' · ')),h('button',{class:'sm',onclick:()=>{location.hash='alertas'}},'Ver detalhes')));
+  const units=sum(av,l=>l.qtd),ctrlU=sum(av.filter(l=>l.ctrl),l=>l.qtd);
+  wrap.append(h('div',{class:'kpis'},kpi('pill','var(--c-acc)','var(--accsoft)',Object.keys(S.prod).length||new Set(E.map(l=>l.gtin)).size,'Medicamentos','no catálogo'),kpi('box','var(--c-frio)','var(--friobg)',nf(units),'Unidades disponíveis',av.length+' lotes ativos'),kpi('alert','var(--c-bad)','var(--badbg)',A.venc.length,'Vencidos',A.venc.length?'retirar do estoque':'nenhum no momento'),kpi('clock','var(--c-warn)','var(--warnbg)',A.crit.length+A.warn.length,'Vencem em 30 dias',A.crit.length+' em até 7 dias'),kpi('lock','var(--c-crit)','var(--critbg)',A.bloq.length,'Bloqueados','recolhimento ou quarentena'),kpi('shield','var(--c-ctrl)','var(--ctrlbg)',nf(ctrlU),'Controlados','unidades em estoque')));
+  const q=(f)=>sum(av.filter(l=>l.d!=null&&f(l.d)),l=>l.qtd);
+  const parts=[['Vencido',q(d=>d<0),'var(--c-bad)'],['Até 7 dias',q(d=>d>=0&&d<=7),'var(--c-crit)'],['8 a 30 dias',q(d=>d>7&&d<=30),'var(--c-warn)'],['Mais de 30 dias',q(d=>d>30),'var(--c-ok)'],['Bloqueado',sum(E.filter(l=>l.bloq),l=>l.qtd),'var(--c-mut)']],tot=sum(parts,x=>x[1]);
+  const nxt=av.filter(l=>l.d!=null).sort(by).slice(0,8);
+  wrap.append(h('div',{class:'cols'},
+    panel('Prioridade de uso',h('p',{class:'sub',style:'margin:-6px 0 6px;font-size:13px'},'O que vence primeiro sai primeiro.'),(nxt.length?tbl(['Medicamento','Lote','Validade','Situação','#Qtd'],rows(nxt,[cMed,cLote,cVal,cTag,cQtd]),520):h('p',{class:'empty'},'Nenhum lote registrado ainda.'))),
+    panel('Situação do estoque',h('div',{class:'dn'},donut(parts,tot),h('div',{class:'lg'},parts.map(([n,v,c])=>h('div',{},h('span',{class:'dot',style:'background:'+c}),n,h('span',{class:'v mono'},nf(v)+(tot?' · '+Math.round(v/tot*100)+'%':'')))))))));
+  const cat={};av.forEach(l=>cat[l.cat]=(cat[l.cat]||0)+l.qtd);
+  const cons={};S.ev.filter(e=>e.tipo==='saida'&&e.t>=now-30*DAY).forEach(e=>{const k=e.destino||'Sem destino';cons[k]=(cons[k]||0)+(+e.qtd||0)});
+  wrap.append(h('div',{class:'g3'},panel('Estoque por categoria',bars(Object.entries(cat).sort((a,b)=>b[1]-a[1]).slice(0,7))),panel('Dispensação por setor (30 dias)',bars(Object.entries(cons).sort((a,b)=>b[1]-a[1]).slice(0,7))),
+    panel('Últimos 7 dias',semana(),h('p',{class:'foot',style:'margin-top:10px'},h('span',{class:'dotl',style:'background:var(--c-frio)'}),'Recebimentos',h('span',{class:'dotl',style:'background:var(--c-crit);margin-left:12px'}),'Dispensações'))));
+  const sp=E.filter(l=>(l.ctrl||l.frio)&&!l.bloq).sort(by).slice(0,6),ev=S.ev.slice(0,6);
+  wrap.append(h('div',{class:'cols even'},
+    panel('Controlados e refrigerados',sp.length?tbl(['Medicamento','Validade','#Qtd','Local'],rows(sp,[cMed,cVal,cQtd,cLoc]),420):h('p',{class:'empty'},'Nenhum item controlado ou refrigerado.')),
+    panel('Movimentações recentes',ev.length?tbl(['Quando','Tipo','Medicamento','#Qtd'],ev.map(e=>h('tr',{},h('td',{},new Date(e.t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})),h('td',{},evTag(e.tipo)),h('td',{},prodName(e.gtin)||e.gtin),h('td',{class:'num mono'},nf(e.qtd)))),420):h('p',{class:'empty'},'Nenhuma movimentação ainda.'))));
+  wrap.append(h('p',{class:'foot'},'Protótipo acadêmico: não substitui sistema hospitalar validado nem os registros exigidos por lei para medicamentos controlados.'));
+  return wrap;
+}
+
+/* ---------- estoque ---------- */
+const F={q:'',st:'todos',sort:'val'};
+function dispDlg(l){
+  const q=h('input',{type:'number',min:1,max:l.qtd,value:1,inputmode:'numeric'}),d=h('select',{},SETORES.map(s=>h('option',{value:s},s)));
+  dlg('Dispensar',h('div',{style:'display:grid;gap:10px'},h('p',{class:'sub'},(l.nome||l.gtin)+', lote '+(l.lote||'sem lote')+'. Em estoque: '+l.qtd+'.'),h('label',{},'Quantidade',q),h('label',{},'Setor de destino',d)),()=>{const n=Math.min(l.qtd,Math.max(1,parseInt(q.value)||1));return act(async()=>{if(n>=l.qtd)await wDel(l.id);else await wUpd(l.id,{qtd:l.qtd-n});await log('saida',l,n,d.value)},'Dispensação registrada.')},'Dispensar')}
+function editDlg(l){
+  const q=h('input',{type:'number',min:0,value:l.qtd}),lc=h('input',{value:l.local||''}),v=h('input',{type:'date',value:l.val||''}),b=h('input',{type:'checkbox',checked:l.bloq}),m=h('input',{value:l.motivo||'',placeholder:'Ex.: recolhimento do fabricante'});
+  dlg('Editar lote',h('div',{style:'display:grid;gap:10px'},h('p',{class:'sub'},(l.nome||l.gtin)+', lote '+(l.lote||'sem lote')),h('label',{},'Quantidade',q),h('label',{},'Validade',v),h('label',{},'Local de armazenamento',lc),h('label',{class:'chk'},b,'Bloqueado (recolhimento ou quarentena)'),h('label',{},'Motivo do bloqueio',m)),
+    ()=>act(async()=>{const n=Math.max(0,parseInt(q.value)||0);await wUpd(l.id,{qtd:n,val:v.value,local:lc.value.trim(),bloq:!!b.checked,motivo:b.checked?m.value.trim():''});await log('ajuste',l,n)},'Lote atualizado.'),'Salvar')}
+function lotActions(l){
+  if(!S.write)return h('td',{});
+  return h('td',{class:'num',style:'white-space:nowrap'},h('button',{class:'sm',disabled:l.bloq,onclick:()=>dispDlg(l)},'Dispensar'),' ',h('button',{class:'sm',onclick:()=>editDlg(l)},'Editar'),' ',
+    h('button',{class:'sm danger',onclick:()=>dlg('Excluir lote?',h('p',{},(l.nome||l.gtin)+', lote '+(l.lote||'sem lote')+', '+l.qtd+' un.'),()=>act(async()=>{await wDel(l.id);await log('exclusao',l,l.qtd)},'Lote excluído.'),'Excluir')},'Excluir'));
+}
+function estoque(){
+  const wrap=h('div',{style:'display:grid;gap:20px'}),tb=h('tbody'),info=h('p',{class:'sub'}),chips=h('div',{class:'row mid'});
+  const draw=()=>{
+    let L=enr();const q=F.q.toLowerCase();
+    if(q)L=L.filter(l=>[l.nome,l.apres,l.cat,l.gtin,l.lote,l.local].join(' ').toLowerCase().includes(q));
+    const f={vencidos:l=>!l.bloq&&l.d!=null&&l.d<0,'7':l=>!l.bloq&&l.d!=null&&l.d>=0&&l.d<=7,'30':l=>!l.bloq&&l.d!=null&&l.d>=0&&l.d<=30,ok:l=>!l.bloq&&l.d!=null&&l.d>30,bloq:l=>l.bloq,ctrl:l=>l.ctrl,frio:l=>l.frio}[F.st];if(f)L=L.filter(f);
+    L.sort(F.sort==='val'?by:F.sort==='qtd'?(a,b)=>b.qtd-a.qtd:(a,b)=>(a.nome||a.gtin).localeCompare(b.nome||b.gtin));
+    tb.textContent='';tb.append(...rows(L,[cMed,cLote,cVal,cTag,cQtd,cLoc,lotActions]));
+    info.textContent=L.length?L.length+' lote(s), '+nf(sum(L,l=>l.qtd))+' unidades. Ordem por validade mais próxima: o que vence primeiro sai primeiro.':'Nenhum lote com esse filtro.';
+    [...chips.children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.k===F.st)));
+  };
+  [['todos','Todos'],['vencidos','Vencidos'],['7','Até 7 dias'],['30','Até 30 dias'],['ok','Mais de 30'],['bloq','Bloqueados'],['ctrl','Controlados'],['frio','Refrigerados']].forEach(([k,l])=>chips.append(h('button',{class:'chip','data-k':k,onclick:()=>{F.st=k;draw()}},l)));
+  const q=h('input',{type:'search',placeholder:'Medicamento, categoria, GTIN, lote ou local',value:F.q,oninput:e=>{F.q=e.target.value;draw()}});
+  const so=h('select',{onchange:e=>{F.sort=e.target.value;draw()}},h('option',{value:'val'},'Validade mais próxima'),h('option',{value:'qtd'},'Maior quantidade'),h('option',{value:'nome'},'Nome'));so.value=F.sort;
+  wrap.append(h('div',{class:'row mid',style:'justify-content:space-between'},h('h1',{},'Estoque'),h('button',{onclick:()=>saveFile('estoque-medicamentos.csv',csvEstoque())},'Exportar CSV')));
+  wrap.append(panel(null,h('div',{style:'display:grid;gap:12px'},h('div',{class:'row'},h('label',{style:'flex:2 1 260px'},'Buscar',q),h('label',{},'Ordenar',so)),chips,info,h('div',{class:'tw'},h('table',{},h('thead',{},h('tr',{},['Medicamento','Lote','Validade','Situação'].map(x=>h('th',{},x)),h('th',{class:'num'},'Qtd'),h('th',{},'Local'),h('th',{}))),tb)))));
+  draw();return wrap;
+}
+
+/* ---------- alertas ---------- */
+function alertasView(){
+  const A=alerts(),wrap=h('div',{style:'display:grid;gap:20px'});
+  wrap.append(h('div',{},h('h1',{},'Alertas'),h('p',{class:'sub'},A.n?A.n+' item(ns) pedem ação.':'Tudo em dia: nenhum lote perto do vencimento.')));
+  const grp=(t,list,k)=>list.length?panel(null,h('div',{class:'row mid',style:'margin-bottom:8px'},h('span',{class:'tag '+k},list.length),h('h2',{style:'margin:0'},t)),tbl(['Medicamento','Lote','Validade','Situação','#Qtd','Local',''],rows(list,[cMed,cLote,cVal,cTag,cQtd,cLoc,l=>S.write?h('td',{class:'num'},h('button',{class:'sm',onclick:()=>(l.bloq?editDlg:dispDlg)(l)},l.bloq?'Revisar':'Dispensar')):h('td',{})]),620)):null;
+  wrap.append(...[grp('Vencidos: retirar do estoque',A.venc,'bad'),grp('Bloqueados: recolhimento ou quarentena',A.bloq,'bad'),grp('Vencem em até 7 dias',A.crit,'crit'),grp('Vencem em até '+A.max+' dias',A.warn,'warn')].filter(Boolean));
+  if(A.low.length)wrap.append(panel('Abaixo do estoque mínimo',tbl(['Medicamento','#Disponível','Situação'],A.low.map(x=>h('tr',{},h('td',{},x.nome||h('span',{class:'mono'},x.gtin)),h('td',{class:'num mono'},x.qtd+' de '+x.min),h('td',{},h('span',{class:'tag bad'},'Repor')))),420)));
+  const status=h('p',{class:'sub'}),setN=()=>{status.textContent=!('Notification' in window)?'Este navegador não oferece notificações.':LS.get('vc_notif',false)&&Notification.permission==='granted'?'Avisos ativos neste aparelho.':Notification.permission==='denied'?'As notificações estão bloqueadas nas permissões do navegador.':'Avisos desativados neste aparelho.'};setN();
+  const chips=h('div',{class:'row mid'},[60,30,15,7,3,1,0].map(n=>{const on=(S.cfg.dias||[]).includes(n);return h('button',{class:'chip','aria-pressed':String(on),disabled:!S.write,onclick:()=>act(()=>wCfg({...S.cfg,dias:on?S.cfg.dias.filter(x=>x!==n):[...S.cfg.dias,n].sort((a,b)=>b-a)}))},n===0?'No dia':n+' dias antes')}));
+  const lab=()=>LS.get('vc_notif',false)?'Desativar avisos neste aparelho':'Ativar avisos neste aparelho';
+  const nb=h('button',{class:'main',onclick:async()=>{if(!('Notification' in window))return;if(LS.get('vc_notif',false))LS.set('vc_notif',false);else{try{const p=Notification.permission==='granted'?'granted':await Notification.requestPermission();if(p==='granted'){LS.set('vc_notif',true);notifyCheck()}}catch(e){}}setN();nb.textContent=lab()}},lab());
+  const ta=h('textarea',{class:'tx',readonly:true});ta.value=digest();
+  wrap.append(h('div',{class:'cols even'},
+    panel(null,h('div',{style:'display:grid;gap:12px'},h('h2',{style:'margin:0'},'Quando avisar'),h('p',{class:'sub'},'Cada lote gera um aviso ao entrar em cada faixa marcada, uma única vez. Lotes bloqueados não geram aviso de validade.'),chips,S.write?null:h('p',{class:'sub'},'Somente quem tem permissão de edição altera as faixas.'),nb,status,h('p',{class:'sub'},'Os avisos do navegador aparecem enquanto o portal estiver aberto. Para alertas com o portal fechado seria preciso um servidor de envio (e-mail, WhatsApp ou push).'))),
+    panel(null,h('div',{style:'display:grid;gap:12px'},h('h2',{style:'margin:0'},'Resumo para enviar'),h('p',{class:'sub'},'Copie o texto e envie à equipe por WhatsApp ou e-mail.'),ta,h('div',{class:'row'},h('button',{class:'main',onclick:()=>saveFile('resumo-medicamentos.txt',digest())},'Copiar resumo'))))));
+  return wrap;
+}
+
+/* ---------- medicamentos (catálogo) ---------- */
+function medDlg(gtin){
+  const p=P(gtin),g=h('input',{value:gtin||'',placeholder:'8 a 14 dígitos',inputmode:'numeric',disabled:!!gtin}),nm=h('input',{value:p.nome||'',placeholder:'Ex.: Dipirona sódica 500 mg/mL'}),ap=h('input',{value:p.apres||'',placeholder:'Ex.: Solução injetável, ampola 2 mL'});
+  const ct=h('select',{},CATS.map(c=>h('option',{value:c},c)));ct.value=p.cat||'Outros';
+  const cc=h('input',{type:'checkbox',checked:!!p.ctrl}),fc=h('input',{type:'checkbox',checked:!!p.frio}),mn=h('input',{type:'number',min:0,value:p.min||0});
+  dlg(p.nome?'Editar medicamento':'Novo medicamento',h('div',{style:'display:grid;gap:10px'},h('label',{},'GTIN (código de barras; com 13 dígitos vira GTIN-14 com zero à esquerda)',g),h('label',{},'Nome e concentração',nm),h('label',{},'Apresentação',ap),h('label',{},'Categoria',ct),h('div',{class:'row'},h('label',{class:'chk'},cc,'Controlado'),h('label',{class:'chk'},fc,'Refrigerado (2 a 8 °C)')),h('label',{},'Estoque mínimo (unidades)',mn)),
+    ()=>{const raw=(gtin||g.value).replace(/\D/g,''),c=norm(raw);if(!/^\d{8,14}$/.test(raw)||!nm.value.trim()){toast('Informe um GTIN válido e o nome.','bad');return false}return act(()=>wProd(c,{nome:nm.value.trim(),apres:ap.value.trim(),cat:ct.value,ctrl:!!cc.checked,frio:!!fc.checked,min:Math.max(0,parseInt(mn.value)||0)}),'Medicamento salvo.')},'Salvar');
+}
+function medicamentos(){
+  const wrap=h('div',{style:'display:grid;gap:20px'}),tot={};enr().filter(l=>!l.bloq).forEach(l=>{if(l.gtin)tot[l.gtin]=(tot[l.gtin]||0)+l.qtd});
+  const ids=[...new Set([...Object.keys(S.prod),...Object.keys(tot)])].sort((a,b)=>(prodName(a)||a).localeCompare(prodName(b)||b));
+  wrap.append(h('div',{class:'row mid',style:'justify-content:space-between'},h('div',{},h('h1',{},'Medicamentos'),h('p',{class:'sub'},'Catálogo com nome, categoria e estoque mínimo. Códigos lidos sem cadastro aparecem aqui para você completar.')),h('button',{class:'main',disabled:!S.write,onclick:()=>medDlg('')},'Novo medicamento')));
+  const body=ids.map(id=>{const p=P(id),l={...p,ctrl:!!p.ctrl,frio:!!p.frio},t=tot[id]||0,low=Number(p.min)>0&&t<Number(p.min);
+    return h('tr',{},h('td',{},h('b',{},p.nome||'Sem cadastro'),badges(l),h('small',{},[p.apres,id].filter(Boolean).join(' · '),gtinOk(id)?null:' · dígito inválido')),h('td',{},p.cat||'—'),h('td',{class:'num mono'},nf(p.min||0)),h('td',{class:'num mono'},nf(t),low?h('span',{class:'tag bad',style:'margin-left:8px'},'Repor'):null),h('td',{class:'num'},S.write?h('button',{class:'sm',onclick:()=>medDlg(id)},p.nome?'Editar':'Cadastrar'):null))});
+  wrap.append(panel(null,ids.length?tbl(['Medicamento','Categoria','#Mínimo','#Disponível',''],body,560):h('p',{class:'empty'},'Nenhum medicamento ainda.')));
+  return wrap;
+}
+
+/* ---------- gerar datamatrix ---------- */
+const BW_URLS=['https://cdn.jsdelivr.net/npm/bwip-js@4.5.0/dist/bwip-js-min.js','https://cdn.jsdelivr.net/npm/bwip-js@4.3.1/dist/bwip-js-min.js'];
+function loadBw(){return new Promise(res=>{if(window.bwipjs)return res(true);let i=0;const next=()=>{if(i>=BW_URLS.length)return res(false);const sc=document.createElement('script');sc.src=BW_URLS[i++];sc.onload=()=>window.bwipjs?res(true):next();sc.onerror=next;(document.head||document.body).append(sc)};next()})}
+const GF={desc:'',gt:'',lt:'',va:'',mes:false,fa:'',sr:'',qt:1,un:''};
+const nk=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase().replace(/\s+/g,' ');
+function medMatch(desc){const k=nk(desc);if(!k)return null;for(const[g,p]of Object.entries(S.prod))if(nk(p.nome)===k)return g;for(let i=0;i<SAMPLE_M.length;i++)if(nk(SAMPLE_M[i][0])===k)return SG[i];return null}
+/* Mesma descrição = mesmo GTIN. Se já existe no catálogo, usa o GTIN dele; senão cria um GTIN interno válido (prefixo 20, faixa de uso restrito do GS1). */
+function gtinFor(desc){const k=nk(desc);if(!k)return'';const m=medMatch(desc);if(m)return m;let x=2166136261;for(const c of k){x^=c.charCodeAt(0);x=Math.imul(x,16777619)>>>0}const b='20'+String(x).padStart(10,'0');return norm(b+ck(b))}
+const ymd=iso=>iso?iso.slice(2,4)+iso.slice(5,7)+iso.slice(8,10):'';
+const okTxt=t=>/^[\x21-\x7E]{1,20}$/.test(t)&&!/[()]/.test(t);
+const dmOpts=(text,scale)=>({bcid:'gs1datamatrix',text,scale:scale||6,paddingwidth:10,paddingheight:10,backgroundcolor:'FFFFFF'});
+function gs1Build(f){
+  const err=[],parts=[],d=String(f.gt||'').replace(/\D/g,'');
+  if(f.gt&&!d)err.push('GTIN: use apenas números.');
+  else if(d){if(d.length<8||d.length>14)err.push('GTIN: informe de 8 a 14 dígitos.');else{const n=norm(d);if(!gtinOk(n))err.push('GTIN: dígito verificador inválido (o correto seria '+ck(d.slice(0,-1))+').');parts.push('(01)'+n)}}
+  const dt=(iso,label)=>{if(!iso)return'';const y=+iso.slice(0,4);if(!(y>=2000&&y<=2099)){err.push(label+': ano fora de 2000 a 2099.');return''}return iso};
+  const fab=dt(f.fa,'Fabricação'),val=dt(f.va,'Validade');
+  if(fab)parts.push('(11)'+ymd(fab));
+  if(val)parts.push('(17)'+(f.mes?ymd(val).slice(0,4)+'00':ymd(val)));
+  if(f.lt){if(okTxt(f.lt))parts.push('(10)'+f.lt);else err.push('Lote: 1 a 20 caracteres, sem espaços nem parênteses.')}
+  if(f.sr){if(okTxt(f.sr))parts.push('(21)'+f.sr);else err.push('Série: 1 a 20 caracteres, sem espaços nem parênteses.')}
+  if(String(f.un||'').trim()){const u=String(f.un).trim();if(/^\d{1,8}$/.test(u)&&+u>=1)parts.push('(30)'+(+u));else err.push('Quantidade: informe um número inteiro de 1 a 99999999.')}
+  if(!String(f.desc||'').trim())err.unshift('Descrição: informe o nome do medicamento.');
+  if(!parts.length&&!err.length)err.push('Preencha ao menos um campo.');
+  return{text:parts.join(''),err,warn:(parts.length&&!val&&!err.length)?'Sem validade: o sistema vai registrar o lote sem data.':''};
+}
+function serialSeq(base,n){const m=/^(.*?)(\d+)$/.exec(base);if(!m)return Array(n).fill(base);const w=m[2].length,st=+m[2];return Array.from({length:n},(_,i)=>m[1]+String(st+i).padStart(w,'0'))}
+function genItems(f){const n=Math.max(1,Math.min(60,parseInt(f.qt)||1)),ss=f.sr?serialSeq(f.sr,n):Array(n).fill('');return ss.map(sr=>({sr,...gs1Build({...f,sr})}))}
+async function saveCanvas(name,cvs){
+  let d=null;try{d=typeof claude!=='undefined'?await claude.use('downloads'):null}catch(e){}
+  if(d){try{const b=await new Promise(r=>cvs.toBlob(r,'image/png'));await d.save({filename:name,data:b});return}catch(e){if(e&&e.code==='declined')return}}
+  dlg('Salvar imagem',h('div',{style:'display:grid;gap:10px'},h('img',{src:cvs.toDataURL('image/png'),alt:'DataMatrix',style:'width:100%;background:#fff;border-radius:8px'}),h('p',{class:'sub'},'Toque e segure na imagem (ou clique com o botão direito) e escolha Salvar imagem.')));
+}
+function sheetCanvas(items,nome){
+  const cols=Math.min(4,items.length),rows=Math.ceil(items.length/cols),cw=300,ch=370,c=document.createElement('canvas');c.width=cols*cw;c.height=rows*ch;
+  const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.fillStyle='#000';x.textAlign='center';
+  items.forEach((it,i)=>{const col=i%cols,row=Math.floor(i/cols),t=document.createElement('canvas');bwipjs.toCanvas(t,dmOpts(it.text,5));
+    x.drawImage(t,col*cw+30,row*ch+16,240,240);const pr=parseGS1(it.text),cx=col*cw+cw/2,y=row*ch+282;
+    x.font='bold 18px sans-serif';x.fillText(String(nome||'').slice(0,28),cx,y);x.font='16px sans-serif';
+    x.fillText([pr['10']&&'Lote '+pr['10'],pr['17']&&'Val '+dbr(iso(pd(pr['17'])))].filter(Boolean).join(' · '),cx,y+26);if(pr['21']||pr['30'])x.fillText([pr['21']&&'Série '+pr['21'],pr['30']&&'Qtd '+pr['30']].filter(Boolean).join(' · '),cx,y+50)});
+  return c;
+}
+function gerar(){
+  const wrap=h('div',{style:'display:grid;gap:18px'});let tok=0,last=null;
+  const meds=Object.entries(S.prod).sort((a,b)=>(a[1].nome||a[0]).localeCompare(b[1].nome||b[0]));
+  const f=(k,props)=>h('input',{...props,value:GF[k],oninput:e=>{GF[k]=e.target.value;upd()}});
+  const dl=h('datalist',{id:'dm-meds'},meds.map(([g,p])=>h('option',{value:p.nome||g})));
+  const de=h('input',{list:'dm-meds',placeholder:'Ex.: Dipirona sódica 500 mg',value:GF.desc,autocomplete:'off',oninput:e=>{GF.desc=e.target.value;upd()}});
+  const gt=h('input',{readonly:true,class:'mono',placeholder:'Gerado automaticamente a partir da descrição',value:GF.gt});
+  const gtNote=h('p',{class:'sub',style:'font-size:13px;margin:6px 0 0'});
+  const saveCat=h('button',{class:'sm',hidden:true,onclick:()=>{if(!S.write||!GF.gt)return;act(()=>wProd(GF.gt,{nome:GF.desc.trim(),apres:'',cat:'Outros',ctrl:false,frio:false,min:0}),'Medicamento salvo no catálogo.').then(()=>upd())}},'Salvar no catálogo');
+  const lt=f('lt',{placeholder:'Ex.: DX2602',autocomplete:'off'}),un=f('un',{type:'number',min:1,max:99999999,placeholder:'Ex.: 100',inputmode:'numeric'}),sr=f('sr',{placeholder:'Ex.: 1001 (opcional)',autocomplete:'off'}),qt=f('qt',{type:'number',min:1,max:60,inputmode:'numeric'});
+  const va=h('input',{type:'date',value:GF.va,oninput:e=>{GF.va=e.target.value;upd()}}),fa=h('input',{type:'date',value:GF.fa,oninput:e=>{GF.fa=e.target.value;upd()}}),mes=h('input',{type:'checkbox',checked:GF.mes,onchange:e=>{GF.mes=!!e.target.checked;upd()}});
+  const msg=h('p',{class:'st bad',role:'alert',hidden:true}),warn=h('p',{class:'st warn',hidden:true}),lib=h('p',{class:'st bad'}),cv=h('canvas',{class:'dmc','aria-label':'DataMatrix gerado'}),code=h('p',{class:'code'}),conf=h('p',{class:'sub',style:'font-size:13.5px'});
+  const sheetG=h('div',{class:'sheet'}),sheetP=h('div',{class:'panel',hidden:true},h('h2',{},'Folha de etiquetas'),h('p',{class:'sub',style:'margin:-6px 0 12px'},'Cada etiqueta recebe uma série sequencial. Baixe a folha e imprima.'),sheetG,h('div',{class:'row',style:'margin-top:14px'},h('button',{class:'main',onclick:()=>{if(!last)return;saveCanvas('folha-etiquetas.png',sheetCanvas(genItems(GF),GF.desc.trim()))}},'Baixar folha (PNG)')));
+  const bs=[h('button',{class:'main',onclick:()=>last&&saveCanvas('datamatrix.png',cv)},'Baixar PNG'),h('button',{onclick:()=>{if(!last)return;try{saveFile('datamatrix.svg',bwipjs.toSVG(dmOpts(last.text,6)))}catch(e){toast('Não foi possível gerar o SVG.','bad')}}},'Baixar SVG'),h('button',{onclick:async()=>{if(!last)return;try{await navigator.clipboard.writeText(last.text);toast('Conteúdo copiado.')}catch(e){toast('Não foi possível copiar.','bad')}}},'Copiar conteúdo'),h('button',{onclick:()=>{if(!last)return;mode='entrada';location.hash='ler';setTimeout(()=>{lerEl();L_.man.value=last.text;L_.sync();toast('Código colocado no leitor. Clique em Registrar.')},150)}},'Testar no leitor')];
+  const preview=h('div',{class:'panel',hidden:true,style:'display:grid;gap:12px;justify-items:start'},h('h2',{style:'margin:0'},'Pré-visualização'),cv,code,conf,lib,h('div',{class:'row'},bs));
+  async function upd(){
+    GF.gt=gtinFor(GF.desc);gt.value=GF.gt;const known=!!medMatch(GF.desc);
+    gtNote.textContent=!GF.gt?'':known?'Medicamento já cadastrado: usando o GTIN dele.':'Medicamento novo: GTIN interno criado a partir da descrição (a mesma descrição sempre gera o mesmo GTIN).';
+    saveCat.hidden=!(GF.gt&&!known&&S.write);
+    const my=++tok,items=genItems(GF),first=items[0];
+    msg.textContent=first.err.join(' ');msg.hidden=!first.err.length;warn.textContent=first.warn;warn.hidden=!first.warn;
+    if(first.err.length){last=null;preview.hidden=true;sheetP.hidden=true;return}
+    last=first;preview.hidden=false;code.textContent=first.text;
+    const pr=parseGS1(first.text);conf.textContent='O sistema lê: '+[pr['01']&&'GTIN '+pr['01'],pr['10']&&'lote '+pr['10'],pr['17']&&'validade '+dbr(iso(pd(pr['17']))),pr['30']&&'quantidade '+pr['30'],pr['21']&&'série '+pr['21']].filter(Boolean).join(' · ');
+    const ok=await loadBw();if(my!==tok)return;
+    if(!ok){lib.textContent='Não foi possível carregar a biblioteca de geração. Verifique a conexão com a internet.';return}
+    lib.textContent='';try{bwipjs.toCanvas(cv,dmOpts(first.text,6))}catch(e){lib.textContent='Erro ao gerar o código: '+(e&&e.message||e)}
+    sheetG.textContent='';
+    if(items.length>1){sheetP.hidden=false;for(const it of items){const c=document.createElement('canvas');try{bwipjs.toCanvas(c,dmOpts(it.text,4));c.className='dms'}catch(e){}sheetG.append(h('figure',{class:'fig'},c,h('figcaption',{},it.sr?'Série '+it.sr:'Sem série')))}}else sheetP.hidden=true;
+  }
+  wrap.append(h('div',{},h('h1',{},'Gerar DataMatrix'),h('p',{class:'sub'},'Monte o código GS1 com as informações do lote e baixe a imagem para imprimir ou testar na leitura.')));
+  wrap.append(h('div',{class:'cols even'},
+    panel('Informações do código',h('div',{style:'display:grid;gap:12px'},h('label',{},'Descrição do medicamento',de,dl),h('div',{},h('label',{},'GTIN (gerado automaticamente)',gt),gtNote,h('div',{style:'margin-top:8px'},saveCat)),h('div',{class:'row'},h('label',{},'Lote',lt),h('label',{style:'flex:0 1 170px'},'Quantidade (unidades)',un)),h('div',{class:'row'},h('label',{},'Validade (data a vencer)',va),h('label',{},'Fabricação',fa)),h('label',{class:'chk'},mes,'Validade só com mês e ano (dia 00 = fim do mês)'),h('div',{class:'row'},h('label',{},'Série (opcional)',sr),h('label',{style:'flex:0 1 150px'},'Nº de etiquetas',qt)),h('p',{class:'sub',style:'font-size:13px'},'Com mais de uma etiqueta e uma série como 1001, as séries saem em sequência (1001, 1002, 1003…).'),msg,warn)),
+    preview));
+  wrap.append(sheetP);upd();return wrap;
+}
+
+/* ---------- usuários ---------- */
+function activeAdmins(except){return S.users.filter(x=>x.papel==='admin'&&x.ativo!==false&&x.id!==except).length}
+function userDlg(u){
+  const nome=h('input',{value:u?u.nome:'',placeholder:'Nome completo'}),us=h('input',{value:u?u.id:'',placeholder:'ex.: maria.silva',disabled:!!u,autocapitalize:'none'}),pp=h('select',{},Object.entries(ROLE_LABEL).map(([k,l])=>h('option',{value:k},l))),pw=h('input',{type:'password',placeholder:u?'Deixe em branco para manter':'Em branco = senha padrão ('+DEFAULT_PW+')',autocomplete:'new-password'}),at=h('input',{type:'checkbox',checked:u?u.ativo!==false:true}),mc=h('input',{type:'checkbox',checked:u?!!u.mustChange:true});
+  pp.value=u?u.papel:'operador';
+  const body=h('div',{style:'display:grid;gap:10px'},h('label',{},'Nome',nome),h('label',{},'Usuário (letras minúsculas, números, ponto, _ ou -)',us),h('label',{},'Perfil',pp),h('label',{},u?'Nova senha':'Senha',pw),u?h('label',{class:'chk'},at,'Usuário ativo'):null,h('label',{class:'chk'},mc,'Exigir nova senha no próximo acesso'),
+    h('p',{class:'sub',style:'font-size:13px'},'Administrador: tudo, inclusive usuários. Operador: recebe, dispensa e edita estoque e catálogo. Somente consulta: só visualiza.'),
+    u?h('div',{},h('button',{class:'sm',onclick:async e=>{await act(()=>resetToDefault(u),'Senha redefinida para '+DEFAULT_PW+'. A pessoa deve trocá-la no próximo acesso.');const d=e.target.closest&&e.target.closest('dialog');if(d)d.close()}},'Redefinir para a senha padrão ('+DEFAULT_PW+')')):null,
+    u&&u.id!==SESSION.id?h('div',{},h('button',{class:'sm danger',onclick:()=>{if(u.papel==='admin'&&activeAdmins(u.id)===0){toast('Mantenha ao menos um administrador ativo.','bad');return}dlg('Excluir usuário?',h('p',{},u.nome+' perderá o acesso. As movimentações dessa pessoa continuam no histórico.'),()=>act(()=>wUserDel(u.id),'Usuário excluído.'),'Excluir')}},'Excluir usuário')):null);
+  dlg(u?'Editar usuário':'Novo usuário',body,async()=>{
+    const nm=nome.value.trim(),id=u?u.id:us.value.trim().toLowerCase(),papel=pp.value,ativo=u?!!at.checked:true;
+    if(!nm){toast('Informe o nome.','bad');return false}
+    if(!/^[a-z0-9][a-z0-9._-]{2,29}$/.test(id)){toast('Usuário: 3 a 30 caracteres (letras minúsculas, números, ponto, _ ou -).','bad');return false}
+    if(!u&&S.users.some(x=>x.id===id)){toast('Esse usuário já existe.','bad');return false}
+    if(pw.value&&pw.value.length<MIN_PW){toast('A senha precisa ter ao menos '+MIN_PW+' caracteres.','bad');return false}
+    if(u&&u.papel==='admin'&&(papel!=='admin'||!ativo)&&activeAdmins(u.id)===0){toast('Mantenha ao menos um administrador ativo.','bad');return false}
+    const pwf=pw.value||(u?'':DEFAULT_PW),keepPw=u&&!pwf,salt=keepPw?u.salt:newSalt(),hash=keepPw?u.hash:await hashPw(pwf,salt);
+    return act(()=>wUser({id,usuario:id,nome:nm,papel,ativo,salt,hash,t:u?u.t:Date.now(),mustChange:(!u&&!pw.value)?true:!!mc.checked}),'Usuário salvo.')},'Salvar');
+}
+function pwDlg(){
+  const a=h('input',{type:'password',autocomplete:'current-password'}),b=h('input',{type:'password',autocomplete:'new-password'}),c=h('input',{type:'password',autocomplete:'new-password'});
+  dlg('Alterar minha senha',h('div',{style:'display:grid;gap:10px'},h('label',{},'Senha atual',a),h('label',{},'Nova senha (mínimo '+MIN_PW+' caracteres)',b),h('label',{},'Repita a nova senha',c)),async()=>{
+    const u=S.users.find(x=>x.id===SESSION.id);if(!u){toast('Usuário não encontrado.','bad');return false}
+    if(await hashPw(a.value,u.salt)!==u.hash){toast('Senha atual incorreta.','bad');return false}
+    if(b.value.length<MIN_PW||b.value!==c.value){toast('A nova senha é curta ou não confere.','bad');return false}
+    const salt=newSalt();return act(async()=>wUser({...u,salt,hash:await hashPw(b.value,salt)}),'Senha alterada.')},'Salvar');
+}
+function usuarios(){
+  const wrap=h('div',{style:'display:grid;gap:18px'});
+  wrap.append(h('div',{class:'pagehead'},h('div',{},h('h1',{},'Usuários'),h('p',{class:'sub'},'Cada pessoa entra com seu próprio usuário e senha, e as movimentações ficam registradas no nome dela.')),h('button',{class:'main',onclick:()=>userDlg(null)},'Novo usuário')));
+  wrap.append(panel(null,S.users.length?tbl(['Nome','Usuário','Perfil','Situação',''],S.users.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map(u=>h('tr',{},h('td',{},h('b',{},u.nome),u.id===SESSION.id&&h('small',{},'você')),h('td',{class:'mono'},u.id),h('td',{},ROLE_LABEL[u.papel]||u.papel),h('td',{},h('span',{class:'tag '+(u.ativo===false?'sem':'ok')},u.ativo===false?'Desativado':'Ativo'),u.mustChange?h('span',{class:'tag warn',style:'margin-left:6px'},'Trocar senha'):null),h('td',{class:'num'},h('button',{class:'sm',onclick:()=>userDlg(u)},'Editar')))),560):h('p',{class:'empty'},'Nenhum usuário.')));
+  return wrap;
+}
+
+/* ---------- movimentações ---------- */
+function movimentacoes(){
+  const wrap=h('div',{style:'display:grid;gap:20px'});
+  wrap.append(h('div',{class:'row mid',style:'justify-content:space-between'},h('div',{},h('h1',{},'Movimentações'),h('p',{class:'sub'},'Últimas 100 movimentações de todos os usuários.')),h('button',{onclick:()=>saveFile('movimentacoes.csv',csvMov())},'Exportar CSV')));
+  wrap.append(panel(null,S.ev.length?tbl(['Quando','Tipo','Medicamento','Lote','#Qtd','Destino','Carga','Quem'],S.ev.map(e=>h('tr',{},h('td',{},new Date(e.t).toLocaleString('pt-BR')),h('td',{},evTag(e.tipo)),h('td',{},prodName(e.gtin)||e.gtin||'—'),h('td',{class:'mono'},e.lote||'—'),h('td',{class:'num mono'},nf(e.qtd)),h('td',{},e.destino||'—'),h('td',{},e.carga||'—'),h('td',{},uName(e.by)))),760):h('p',{class:'empty'},'Nenhuma movimentação ainda.')));
+  return wrap;
+}
+
+/* ---------- relatórios ---------- */
+function relatorios(){
+  const E=enr(),wrap=h('div',{style:'display:grid;gap:20px'}),now=Date.now();
+  wrap.append(h('div',{class:'row mid',style:'justify-content:space-between'},h('div',{},h('h1',{},'Relatórios'),h('p',{class:'sub'},'Resumos para conferência e auditoria.')),h('div',{class:'row'},h('button',{onclick:()=>saveFile('estoque-medicamentos.csv',csvEstoque())},'Exportar estoque'),h('button',{onclick:()=>saveFile('movimentacoes.csv',csvMov())},'Exportar movimentações'))));
+  const cats=[...new Set(E.map(l=>l.cat))].sort();
+  wrap.append(panel('Validade por categoria',cats.length?tbl(['Categoria','#Lotes','#Unidades','#Vencidos','#Até 30 dias'],cats.map(c=>{const L=E.filter(l=>l.cat===c&&!l.bloq);return h('tr',{},h('td',{},c),h('td',{class:'num mono'},L.length),h('td',{class:'num mono'},nf(sum(L,l=>l.qtd))),h('td',{class:'num mono'},L.filter(l=>l.d!=null&&l.d<0).length),h('td',{class:'num mono'},L.filter(l=>l.d!=null&&l.d>=0&&l.d<=30).length))}),480):h('p',{class:'empty'},'Sem dados.')));
+  const cons={};S.ev.filter(e=>e.tipo==='saida'&&e.t>=now-30*DAY).forEach(e=>{const k=prodName(e.gtin)||e.gtin;cons[k]=(cons[k]||0)+(+e.qtd||0)});
+  const ct=E.filter(l=>l.ctrl).sort(by);
+  wrap.append(h('div',{class:'cols even'},panel('Mais dispensados (30 dias)',bars(Object.entries(cons).sort((a,b)=>b[1]-a[1]).slice(0,8))),panel('Medicamentos controlados em estoque',ct.length?tbl(['Medicamento','Lote','Validade','#Qtd'],rows(ct,[cMed,cLote,cVal,cQtd]),460):h('p',{class:'empty'},'Nenhum controlado em estoque.'))));
+  return wrap;
+}
+
+/* ---------- ajustes e exemplo ---------- */
+function loadSample(){
+  const g=b=>b+ck(b),d=n=>{const t=today();t.setDate(t.getDate()+n);return iso(t)},ago=n=>Date.now()-n*DAY-Math.floor(Math.random()*36e5*8);
+  const M=SAMPLE_M;
+  const G=SG;
+  const L=[[0,'DX2501',-3,40,'Farmácia central'],[0,'DX2602',140,520,'Farmácia central'],[1,'NS9910',5,60,'Farmácia central'],[1,'NS0120',200,420,'Farmácia central'],[2,'NV3301',25,90,'Farmácia central'],[3,'TY7712',45,260,'Ambulatório'],[4,'BC0045',300,200,'Farmácia central'],[4,'BC0046',12,60,'Centro cirúrgico'],[5,'DR5520',18,45,'Farmácia central'],[6,'AM4410',90,150,'Farmácia central'],[7,'CF7712',45,30,'UTI'],[8,'SF0045',300,640,'Farmácia central'],[9,'IN5521',90,45,'Geladeira da farmácia'],[10,'MF1102',6,35,'Cofre de controlados'],[11,'DZ8820',150,120,'Cofre de controlados'],[12,'AD4410',70,18,'Pronto-socorro'],[13,'OM2290',200,110,'Farmácia central'],[13,'OM2291',60,40,'Farmácia central',1]];
+  const S_=[[0,'UTI',30,1],[2,'Enfermaria',40,1],[8,'Pronto-socorro',60,2],[8,'UTI',50,2],[6,'Ambulatório',20,3],[7,'Centro cirúrgico',12,3],[10,'UTI',6,4],[12,'Pronto-socorro',10,4],[9,'Enfermaria',8,5],[1,'Pronto-socorro',35,6],[3,'Ambulatório',25,6],[10,'Centro cirúrgico',5,5]];
+  return act(async()=>{
+    M.forEach(()=>0);for(let i=0;i<M.length;i++){const m=M[i];await wProd(G[i],{nome:m[0],apres:m[1],cat:m[2],ctrl:!!m[3],frio:!!m[4],min:m[5]})}
+    for(const[i,lt,off,q,loc,bl]of L){const t=ago(6),l={gtin:G[i],lote:lt,val:d(off),fab:'',serie:'',qtd:q,local:loc,carga:'Exemplo',t,by:who(),bloq:!!bl,motivo:bl?'Recolhimento do fabricante (exemplo)':''};await wAdd('lotes',l);await log('entrada',l,q,'',t)}
+    for(const[i,dest,q,dias]of S_)await log('saida',{gtin:G[i],lote:L.find(x=>x[0]===i)[1],val:'',carga:'Exemplo'},q,dest,ago(dias));
+  },'Exemplo carregado: dados fictícios.');
+}
+
+/* ---------- simulação de uso (escondido) ---------- */
+const EXTRA_M=[['Dipirona sódica 1 g/2 mL','Solução injetável, ampola 2 mL','Analgésico',0,0],['Ibuprofeno 600 mg','Comprimido revestido','Analgésico',0,0],['Cetoprofeno 100 mg','Pó para solução injetável, frasco-ampola','Analgésico',0,0],['Tramadol 50 mg/mL','Solução injetável, ampola 1 mL','Controlado',1,0],['Midazolam 5 mg/mL','Solução injetável, ampola 3 mL','Controlado',1,0],['Fentanila 50 mcg/mL','Solução injetável, ampola 2 mL','Controlado',1,0],['Clonazepam 2 mg','Comprimido','Controlado',1,0],['Ondansetrona 4 mg/2 mL','Solução injetável, ampola','Antiemético',0,0],['Metoclopramida 10 mg','Comprimido','Antiemético',0,0],['Azitromicina 500 mg','Comprimido revestido','Antibiótico',0,0],['Ciprofloxacino 500 mg','Comprimido revestido','Antibiótico',0,0],['Cefalexina 500 mg','Cápsula','Antibiótico',0,0],['Meropenem 1 g','Pó para solução injetável, frasco-ampola','Antibiótico',0,0],['Vancomicina 500 mg','Pó para solução injetável, frasco-ampola','Antibiótico',0,0],['Losartana potássica 50 mg','Comprimido revestido','Cardiovascular',0,0],['Atenolol 50 mg','Comprimido','Cardiovascular',0,0],['Furosemida 20 mg/2 mL','Solução injetável, ampola','Cardiovascular',0,0],['Enalapril 10 mg','Comprimido','Cardiovascular',0,0],['Amiodarona 150 mg/3 mL','Solução injetável, ampola','Cardiovascular',0,0],['Noradrenalina 4 mg/4 mL','Solução injetável, ampola','Emergência',0,0],['Atropina 0,25 mg/mL','Solução injetável, ampola 1 mL','Emergência',0,0],['Succinilcolina 100 mg','Pó para solução injetável, frasco-ampola','Emergência',0,1],['Dexametasona 4 mg/mL','Solução injetável, ampola 2,5 mL','Hormônio',0,0],['Insulina regular 100 UI/mL','Solução injetável, frasco 10 mL','Hormônio',0,1],['Ocitocina 5 UI/mL','Solução injetável, ampola 1 mL','Hormônio',0,1],['Heparina sódica 5000 UI/mL','Solução injetável, frasco 5 mL','Cardiovascular',0,0],['Ringer com lactato','Solução injetável, bolsa 500 mL','Soluções',0,0],['Glicose 5%','Solução injetável, bolsa 500 mL','Soluções',0,0],['Água para injetáveis 10 mL','Ampola plástica','Soluções',0,0],['Pantoprazol 40 mg','Comprimido revestido','Gastro',0,0],['Lactulose 667 mg/mL','Xarope, frasco 120 mL','Gastro',0,0]];
+function histDados(){
+  let sd=20260;const rnd=()=>{sd=sd+0x6D2B79F5|0;let t=Math.imul(sd^sd>>>15,1|sd);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+  const ri=(a,b)=>a+Math.floor(rnd()*(b-a+1)),pick=a=>a[Math.floor(rnd()*a.length)],now=Date.now();
+  const users=S.users.filter(u=>u.ativo!==false).map(u=>u.id),by=()=>users.length?pick(users):who();
+  const forn=['Cristália','EMS','Eurofarma','Medley','Hipolabor','Fresenius Kabi','Baxter','União Química','Teuto','Blau'];
+  const todos=[...SAMPLE_M.map((m,i)=>[m[0],m[1],m[2],m[3],m[4],SG[i]]),...EXTRA_M.map((m,i)=>{const b='7891000000'+p2(i+1);return[...m,norm(b+ck(b))]})];
+  const prod={},lotes=[],ev=[],dest=['UTI','Pronto-socorro','Enfermaria','Centro cirúrgico','Ambulatório'];
+  todos.forEach(([nome,apres,cat,ctrl,frio,g],mi)=>{
+    const base=cat==='Soluções'?ri(250,500):ctrl?ri(30,90):ri(80,380),n=rnd()<.35?2:1;let total=0;
+    for(let k=0;k<n;k++){
+      const r=rnd();let off=r<.1?ri(-25,-1):r<.22?ri(1,7):r<.4?ri(8,30):r<.65?ri(31,120):ri(121,720);
+      let ago=ri(8,100);if(off<0)ago=Math.max(ago,-off+ri(5,60));
+      const q0=ri(Math.round(base*.6),Math.round(base*1.6)),lote=pick(['DX','NS','LT','BC','AM','OM','TY','CF'])+String(ri(1000,9999)),carga='NF-e '+ri(10000,99999)+' · '+pick(forn);
+      const loc=frio?'Geladeira da farmácia':ctrl?'Cofre de controlados':pick(['Farmácia central','Farmácia central','Almoxarifado']);
+      const tIn=now-ago*DAY-ri(0,36e5*10),vd=new Date();vd.setDate(vd.getDate()+off);
+      const bloq=rnd()<.08&&off>0,l={gtin:g,lote,val:iso(vd),fab:'',serie:'',qtd:q0,local:loc,carga,t:tIn,by:by(),bloq,motivo:bloq?pick(['Recolhimento do fabricante (simulação)','Quarentena: embalagem violada (simulação)']):''};
+      ev.push({t:tIn,tipo:'entrada',gtin:g,lote,val:l.val,qtd:q0,carga,destino:'',by:l.by});
+      let rem=q0;const lo=Math.max(0,-off),hi=ago-1,saidas=ctrl?ri(1,2):ri(1,3);
+      if(!bloq&&hi>=lo)for(let j=0;j<saidas;j++){
+        const q=ri(1,Math.max(1,Math.round(q0*(ctrl?.15:.3))));if(rem-q<1)continue;
+        const dA=ri(lo,hi),d=ctrl?pick(['UTI','Centro cirúrgico','Pronto-socorro']):pick(dest);
+        rem-=q;ev.push({t:now-dA*DAY-ri(0,36e5*10),tipo:'saida',gtin:g,lote,val:l.val,qtd:q,carga,destino:d,by:by()});
+      }
+      l.qtd=rem;lotes.push(l);if(!bloq)total+=rem;
+    }
+    const baixo=rnd()<.18;
+    prod[g]={nome,apres,cat,ctrl:!!ctrl,frio:!!frio,min:baixo?Math.ceil(total*1.4)+5:Math.max(10,Math.floor(total*.3))};
+  });
+  ev.sort((a,b)=>b.t-a.t);
+  return{prod,lotes,ev:ev.slice(0,100).filter(e=>e.t<=now)};
+}
+async function gerarHistorico(limpar){
+  if(limpar){for(const l of[...S.lotes])await wDelAny('lotes',l.id);for(const e of[...S.ev])await wDelAny('eventos',e.id);for(const g of Object.keys(S.prod))await wDelAny('produtos',g)}
+  const D=histDados();
+  if(S.mode==='db'){
+    const jobs=[...Object.entries(D.prod).map(([g,o])=>()=>db.doc('produtos/'+g).set(o)),...D.lotes.map(l=>()=>db.collection('lotes').add(l)),...D.ev.map(e=>()=>db.collection('eventos').add(e))];
+    for(let i=0;i<jobs.length;i+=15)await Promise.all(jobs.slice(i,i+15).map(f=>f()));
+  }else{
+    Object.assign(S.prod,D.prod);D.lotes.forEach((l,i)=>{l.id=uid()+i});D.ev.forEach((e,i)=>{e.id=uid()+'e'+i});
+    S.lotes=[...D.lotes,...S.lotes];S.ev=[...D.ev,...S.ev].sort((a,b)=>b.t-a.t);persist();changed();
+  }
+}
+function histDlg(){
+  if(!SESSION||!S.write||!isAdmin()){toast('Só administradores conseguem gerar o histórico.','bad');return}
+  const lp=h('input',{type:'checkbox'});
+  dlg('Simular sistema em uso',h('div',{style:'display:grid;gap:10px'},h('p',{class:'sub'},'Cria 45 medicamentos no catálogo, lotes com validades variadas (vencidos, críticos e longos), lotes bloqueados, itens abaixo do estoque mínimo e movimentações de entrada e saída das últimas semanas, feitas por vários usuários. Todos os dados são fictícios.'),h('label',{class:'chk'},lp,'Apagar os dados atuais antes')),()=>act(()=>gerarHistorico(lp.checked),'Pronto: o sistema agora parece estar em uso há meses.'),'Gerar')
+}
+function zerarDlg(){dlg('Zerar o sistema?',h('p',{},'Remove '+S.lotes.length+' lote(s), '+Object.keys(S.prod).length+' medicamento(s) do catálogo e o histórico de movimentações, para todos que usam o portal. Não dá para desfazer.'),()=>act(async()=>{for(const l of[...S.lotes])await wDelAny('lotes',l.id);for(const e of[...S.ev])await wDelAny('eventos',e.id);for(const g of Object.keys(S.prod))await wDelAny('produtos',g)},'Sistema zerado.'),'Zerar tudo')}
+function ajustes(){
+  const wrap=h('div',{style:'display:grid;gap:20px'});wrap.append(h('div',{},h('h1',{},'Ajustes')));
+  wrap.append(panel('Minha conta',h('div',{class:'row mid',style:'justify-content:space-between'},h('div',{},h('b',{},SESSION.nome),h('p',{class:'sub'},'Usuário '+SESSION.id+' · '+(ROLE_LABEL[SESSION.papel]||SESSION.papel))),h('button',{onclick:pwDlg},'Alterar minha senha'))));
+  wrap.append(panel('Onde os dados ficam',h('p',{},S.mode==='db'?'Banco compartilhado: todos que abrem este portal veem o mesmo estoque, em tempo real, em qualquer aparelho.':'Somente neste aparelho: o banco compartilhado não está disponível nesta visualização. Os dados ficam no navegador e não aparecem em outros aparelhos.'),S.write?null:h('p',{class:'sub',style:'margin-top:6px'},'Seu acesso é só de leitura: você vê o estoque, mas não altera.')));
+  const file=h('input',{type:'file',accept:'.json,application/json',style:'display:none',onchange:async e=>{const f=e.target.files[0];if(!f)return;try{const j=JSON.parse(await f.text());const Ls=(j.lotes||[]).filter(x=>x&&x.gtin!=null);dlg('Importar backup?',h('p',{},Ls.length+' lote(s) e '+Object.keys(j.produtos||{}).length+' medicamento(s) serão adicionados.'),()=>act(async()=>{for(const[g,p]of Object.entries(j.produtos||{}))await wProd(g,p);for(const l of Ls){const{id,...r}=l;await wAdd('lotes',r)}},'Backup importado.'),'Importar')}catch(x){toast('Arquivo inválido.','bad')}}});
+  wrap.append(panel('Dados',h('div',{class:'row'},
+    h('button',{onclick:()=>saveFile('estoque-medicamentos.csv',csvEstoque())},'Exportar estoque (CSV)'),
+    h('button',{onclick:()=>saveFile('backup-dona-helena.json',JSON.stringify({lotes:S.lotes,produtos:S.prod,config:S.cfg},null,1))},'Baixar backup (JSON)'),
+    h('button',{disabled:!S.write||!isAdmin(),onclick:()=>file.click()},'Importar backup'),file,
+    DEMO&&h('button',{disabled:!S.write,onclick:loadSample},'Carregar exemplo com medicamentos'),
+    h('button',{disabled:!S.write||!isAdmin(),onclick:histDlg},'Simular sistema em uso'),
+    h('button',{class:'danger',disabled:!S.write||!isAdmin()||!S.lotes.length,onclick:()=>dlg('Apagar todos os lotes?',h('p',{},'Isso remove '+S.lotes.length+' lote(s) para todos. O histórico e o catálogo são mantidos.'),()=>act(async()=>{for(const l of[...S.lotes])await wDel(l.id)},'Lotes apagados.'),'Apagar tudo')},'Apagar lotes'),
+    h('button',{class:'danger',disabled:!S.write||!isAdmin()||(!S.lotes.length&&!Object.keys(S.prod).length&&!S.ev.length),onclick:zerarDlg},'Zerar sistema'))));
+  wrap.append(panel('Como o código é lido',h('p',{class:'sub'},'GTIN (01), validade (17 ou 15), lote (10), série (21), fabricação (11) e quantidade (30). Aceita o texto com parênteses ou com separador GS, e o dia 00 vale como fim do mês. Os dados de exemplo usam GTINs e lotes fictícios.')));
+  wrap.append(h('p',{class:'foot'},'Protótipo acadêmico: não substitui sistema hospitalar validado nem os registros exigidos por lei para medicamentos controlados.'));
+  return wrap;
+}
+const VIEWS={inicio,gerar,estoque,alertas:alertasView,medicamentos,movimentacoes,relatorios,usuarios,ajustes};
+
+/* ---------- leitura (câmera e leitor) ---------- */
+let L_=null,stream=null,running=false,det=null,lastCode='',lastAt=0,mode='entrada',sessao=[];
+const cv=document.createElement('canvas'),cx=cv.getContext('2d',{willReadFrequently:true});let reader=null;
+if(window.ZXing){const hh=new Map();hh.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.DATA_MATRIX,ZXing.BarcodeFormat.QR_CODE,ZXing.BarcodeFormat.CODE_128]);hh.set(ZXing.DecodeHintType.TRY_HARDER,true);reader=new ZXing.MultiFormatReader();reader.setHints(hh)}
+function beep(){try{navigator.vibrate&&navigator.vibrate(60);const a=new(window.AudioContext||window.webkitAudioContext)(),o=a.createOscillator();o.frequency.value=880;o.connect(a.destination);o.start();setTimeout(()=>{o.stop();a.close()},90)}catch(e){}}
+function say(t,k){const e=L_.st;e.textContent=t;e.className='st '+(k||'')}
+function lerEl(){
+  if(L_)return L_.root;
+  const v=h('video',{playsinline:true,muted:true}),off=h('div',{class:'off'},'Câmera desligada'),fr=h('div',{class:'frame',hidden:true});
+  const carga=h('input',{placeholder:'Ex.: NF 004512 ou fornecedor',autocomplete:'off'}),qtd=h('input',{type:'number',min:1,value:1,inputmode:'numeric'}),loc=h('input',{placeholder:'Ex.: Farmácia central',autocomplete:'off'});
+  const dest=h('select',{},SETORES.map(s=>h('option',{value:s},s))),destL=h('label',{hidden:true},'Setor de destino',dest);
+  const man=h('input',{placeholder:'(01)'+SG[0]+'(17)271231(10)DX2602',autocomplete:'off'}),st=h('p',{class:'st'},'Aponte para o código quando a câmera abrir.');
+  const bCam=h('button',{class:'main'},'Abrir câmera'),bStop=h('button',{hidden:true},'Parar câmera');
+  const mE=h('button',{'aria-pressed':'true',onclick:()=>setMode('entrada')},'Receber'),mS=h('button',{'aria-pressed':'false',onclick:()=>setMode('saida')},'Dispensar');
+  const last=h('div',{},h('p',{class:'empty'},'Nenhuma leitura ainda.')),ses=h('div',{});
+  L_={v,off,fr,carga,qtd,loc,dest,man,st,bCam,bStop,last,ses};
+  const sync=()=>{if(L_.exBox)L_.exBox.hidden=!DEMO;mE.setAttribute('aria-pressed',String(mode==='entrada'));mS.setAttribute('aria-pressed',String(mode==='saida'));destL.hidden=mode!=='saida'};
+  const setMode=m=>{mode=m;sync();say(m==='saida'?'Modo dispensação: cada leitura baixa o lote e registra o setor.':'Modo recebimento: cada leitura registra o lote no estoque.')};
+  L_.sync=sync;
+  const doMan=async()=>{if(man.value.trim()&&await ingest(man.value))man.value=''};
+  man.addEventListener('keydown',e=>{if(e.key==='Enter')doMan()});
+  let ex=0;
+  const exSel=h('select',{},SAMPLE_M.map((m,i)=>h('option',{value:i},m[0]))),exVal=h('select',{},[['400','Validade distante'],['20','Vence em 20 dias'],['-5','Vencido']].map(([v,l])=>h('option',{value:v},l))),exInfo=h('p',{class:'sub',style:'margin-top:6px'});
+  const bEx=h('button',{onclick:()=>{const i=+exSel.value,dd=new Date();dd.setDate(dd.getDate()+(+exVal.value));ex++;const vv=String(dd.getFullYear()).slice(2)+p2(dd.getMonth()+1)+p2(dd.getDate());man.value='(01)'+SG[i]+'(17)'+vv+'(10)LT'+(2600+i*7+ex)+'(21)'+(1000+ex);exInfo.textContent='Código de exemplo de '+SAMPLE_M[i][0]+'. Clique em Registrar.'}},'Preencher exemplo');
+  const exBox=h('div',{hidden:!DEMO},h('h2',{style:'margin-top:18px'},'Testar com um medicamento de exemplo'),h('div',{class:'row'},h('label',{style:'flex:2 1 220px'},'Medicamento',exSel),h('label',{},'Validade',exVal),bEx),exInfo);L_.exBox=exBox;
+  bCam.onclick=startCam;bStop.onclick=stopCam;
+  const root=h('div',{style:'display:grid;gap:20px'},h('div',{},h('h1',{},'Ler código'),h('p',{class:'sub'},'Leia o DataMatrix GS1 da embalagem para receber ou dispensar.')),
+    panel(null,h('div',{class:'row'},h('label',{style:'flex:2 1 220px'},'Nota fiscal ou fornecedor',carga),h('label',{},'Local de armazenamento',loc),h('label',{style:'flex:0 1 120px'},'Qtd por leitura',qtd),destL,h('div',{style:'display:grid;gap:4px'},h('span',{class:'sub',style:'font-size:14px'},'Operação'),h('div',{class:'seg'},mE,mS)))),
+    h('div',{class:'cols'},panel('Câmera',h('div',{class:'vf'},v,off,fr),h('div',{class:'row'},bCam,bStop,window.self!==window.top?h('button',{onclick:()=>{try{window.open(location.href,'_blank')}catch(e){}}},'Abrir em nova aba'):null),h('div',{style:'margin-top:10px'},st),h('h2',{style:'margin-top:18px'},'Leitor USB ou Bluetooth, ou texto colado'),h('div',{class:'row'},h('label',{},'Conteúdo do código',man),h('button',{class:'main',onclick:doMan},'Registrar')),exBox),
+      h('div',{style:'display:grid;gap:20px'},panel('Última leitura',last),panel('Nesta sessão',ses))));
+  L_.root=root;refreshLer();return root;
+}
+function showLast(r,l){
+  const b=L_.last;L_.lastData=[r,l];b.textContent='';const p=P(r.gtin).nome?P(r.gtin):(sampleProd(r.gtin)||{});
+  const rowsK=[['Medicamento',p.nome||'Sem cadastro','big'],['Apresentação',p.apres||'—',''],['GTIN',r.gtin||'—','mono'],['Lote',r.lote||'—','mono big'],['Validade',dbr(r.val),'mono big'],['Situação',null],['Série',r.serie||'—','mono'],['Quantidade',l]];
+  const dl=h('dl',{class:'kv'});rowsK.forEach(([a,c,k])=>dl.append(h('dt',{},a),h('dd',{},a==='Situação'?tag(daysLeft(r.val)):h('span',{class:k||''},String(c)))));b.append(dl);
+  if(p.ctrl||p.frio)b.append(h('p',{style:'margin-top:10px'},badges({ctrl:p.ctrl,frio:p.frio})));
+  if(!p.nome&&r.gtin)b.append(h('div',{style:'margin-top:12px;display:grid;gap:8px'},h('p',{class:'sub'},'Este código ainda não tem nome no catálogo.'),h('div',{},h('button',{class:'main sm',disabled:!S.write,onclick:()=>medDlg(r.gtin)},'Cadastrar medicamento'))));
+  if(r.gtin&&!gtinOk(r.gtin))b.append(h('p',{class:'tag bad',style:'margin-top:12px'},'Dígito verificador do GTIN inválido: confira a leitura.'));
+}
+function refreshLer(){if(!L_)return;if(L_.lastData)showLast(L_.lastData[0],L_.lastData[1]);L_.ses.textContent='';L_.ses.append(sessao.length?h('div',{class:'tw'},h('table',{style:'min-width:360px'},h('tbody',{},sessao.slice(0,8).map(s=>h('tr',{},h('td',{},s.hora),h('td',{},evTag(s.tipo)),h('td',{class:'mono'},s.lote||'—'),h('td',{class:'num mono'},s.qtd)))))):h('p',{class:'empty'},'Nenhuma leitura nesta sessão.'))}
+async function ingest(raw){
+  if(!S.write){say('Seu acesso é só de leitura.','bad');return false}
+  let p;try{p=parseGS1(raw)}catch(e){say(e.message,'bad');return false}
+  const gtin=norm(p['01']||p['02']||''),vs=p['17']||p['15'],val=pd(vs);
+  if(vs&&!val){say('A validade do código ('+vs+') não é uma data válida.','bad');return false}
+  if(!gtin&&!p['10']&&!val){say('Este código não tem GTIN, lote nem validade.','bad');return false}
+  const q=Math.max(1,parseInt(L_.qtd.value)||1),n=p['30']?+p['30']:q;
+  const r={gtin,lote:p['10']||'',val:iso(val),fab:iso(pd(p['11'])),serie:p['21']||'',carga:L_.carga.value.trim(),local:L_.loc.value.trim()};
+  const ex=S.lotes.find(x=>x.gtin===r.gtin&&(x.lote||'')===r.lote&&(x.val||'')===r.val&&(x.serie||'')===r.serie);
+  try{
+    const sp=sampleProd(gtin);if(sp&&!P(gtin).nome)await wProd(gtin,sp);
+    if(mode==='entrada'){
+      if(ex&&r.serie){say('Esta unidade já foi registrada (série '+r.serie+').','warn');return false}
+      if(ex)await wUpd(ex.id,{qtd:(Number(ex.qtd)||0)+n});else await wAdd('lotes',{...r,qtd:n,t:Date.now(),by:who()});
+      await log('entrada',r,n);showLast(r,(ex?(Number(ex.qtd)||0)+n:n)+' no lote');say('Recebimento registrado.','ok');
+    }else{
+      if(!ex){say('Lote não encontrado no estoque.','bad');return false}
+      if(ex.bloq){say('Este lote está bloqueado'+(ex.motivo?': '+ex.motivo:'')+'. Não dispense.','bad');return false}
+      const m=Math.min(Number(ex.qtd)||0,n);if(m>=(Number(ex.qtd)||0))await wDel(ex.id);else await wUpd(ex.id,{qtd:ex.qtd-m});
+      await log('saida',r,m,L_.dest.value);showLast(r,'saiu '+m+' para '+L_.dest.value);say('Dispensação registrada.','ok');
+    }
+  }catch(e){say('Não foi possível salvar'+(e&&e.code?' ('+e.code+')':'')+'.','bad');return false}
+  sessao.unshift({hora:new Date().toLocaleTimeString('pt-BR'),tipo:mode,lote:r.lote,qtd:n});refreshLer();beep();return true;
+}
+function zx(){const w=L_.v.videoWidth;if(!w||!reader)return null;const sc=Math.min(1,800/w);cv.width=Math.round(w*sc);cv.height=Math.round(L_.v.videoHeight*sc);cx.drawImage(L_.v,0,0,cv.width,cv.height);try{return reader.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(cv)))).getText()}catch(e){return null}}
+async function loop(){
+  if(!running)return;
+  try{let t=null;if(det){const r=await det.detect(L_.v);if(r.length)t=r[0].rawValue}else t=zx();
+    if(t&&!(t===lastCode&&Date.now()-lastAt<2500)){lastCode=t;lastAt=Date.now();await ingest(t)}}catch(e){}
+  setTimeout(loop,det?120:250);
+}
+async function startCam(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){say('Este navegador não abre a câmera. Use o leitor USB ou cole o texto.','bad');return}
+  try{stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280}},audio:false})}
+  catch(e){const n=e&&e.name;say(n==='NotFoundError'?'Nenhuma câmera encontrada neste aparelho.':n==='NotReadableError'?'A câmera está em uso por outro aplicativo. Feche-o e tente de novo.':'Câmera sem autorização. Se a página está dentro de outro app, abra em uma nova aba e toque em Permitir. Se você já negou, toque no cadeado ao lado do endereço > Permissões > Câmera > Permitir.','bad');return}
+  L_.v.srcObject=stream;await L_.v.play();L_.off.hidden=true;L_.fr.hidden=false;L_.bCam.hidden=true;L_.bStop.hidden=false;running=true;
+  if('BarcodeDetector' in window){try{const f=await BarcodeDetector.getSupportedFormats();if(f.includes('data_matrix'))det=new BarcodeDetector({formats:['data_matrix','qr_code','code_128']})}catch(e){}}
+  say(det||reader?'Câmera ativa. Aponte para o DataMatrix.':'A leitura por câmera não carregou. Use o leitor USB ou cole o texto.',det||reader?'':'bad');loop();
+}
+function stopCam(){running=false;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;if(!L_)return;L_.v.srcObject=null;L_.off.hidden=false;L_.fr.hidden=true;L_.bCam.hidden=false;L_.bStop.hidden=true}
+
+/* ---------- início ---------- */
+async function boot(){
+  S.cfg={...S.cfg,...LS.get('vc_cfg',{})};S.lotes=LS.get('vc_lotes',[]);S.prod=LS.get('vc_prod',{});S.ev=LS.get('vc_ev',[]);SESSION=loadSess();S.users=LS.get('vc_users',[]);S.usersLoaded=true;
+  if(typeof claude!=='undefined'&&claude&&claude.use){
+    try{db=await claude.use('db')}catch(e){db=null}
+    try{userCap=await claude.use('user')}catch(e){userCap=null}
+  }
+  if(db){
+    S.mode='db';S.lotes=[];S.prod={};S.ev=[];S.users=[];S.usersLoaded=false;
+    if(userCap){try{S.me=await userCap.me()}catch(e){}try{if(await userCap.can('data.write')===false)S.write=false}catch(e){}}
+    subscribe();
+  }
+  if(location.hash==='#demo'){location.hash='inicio';DEMO=!DEMO;LS.set('vc_demo',DEMO)}
+  renderNav();route();setInterval(()=>{renderNav();notifyCheck()},60000);
+}
+(()=>{let n=0,t=0;$('logo').addEventListener('click',()=>{const k=Date.now();n=k-t<3000?n+1:1;t=k;if(n>=5){n=0;toggleDemo()}})})();
+renderNav();app.append(h('p',{class:'empty'},'Carregando…'));
+boot();
+</script>
+</body>
+</html>
